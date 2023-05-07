@@ -2,6 +2,8 @@
 
 A reinforcement learning-based personal goal assistant that mimics user behavior and operates autonomously to achieve user-defined goals.
 
+![Screenshot from 2023-05-07 17-31-54](https://user-images.githubusercontent.com/12392345/236676233-2f25d830-3aa5-4898-a864-0b8ae6b8bbbe.png)
+
 ## Installation
 
 1. Clone the repository:
@@ -16,8 +18,16 @@ pip install -r requirements.txt
 
 ## Usage
 
-TBD: Add instructions for using the software
+1. Run the Flask web application:
+```
+python app.py
+```
 
+2. Open a web browser and navigate to `http://127.0.0.1:5000/` to access the Personal Goal Assistant interface.
+
+3. Enter a goal in the input field and click "Run RL Agent" to execute the reinforcement learning agent.
+
+The agent will generate subtasks based on the provided goal and execute them using keyboard and mouse actions.
 
 ## Data Storage with Milvus
 
