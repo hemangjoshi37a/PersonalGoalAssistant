@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 # milvus data
-./milvus/volumes
+milvus/volumes
