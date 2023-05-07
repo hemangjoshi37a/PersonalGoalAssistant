@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RL Agent Interface</title>
+</head>
+
+<body>
+  <h1>Reinforcement Learning Agent Interface</h1>
+  <form id="rl-agent-form">
+    <label for="goal">Goal:</label>
+    <input type="text" id="goal" name="goal" required>
+    <button type="submit">Run RL Agent</button>
+    <!-- Add this element after the button -->
+    <div id="output" style="border: 1px solid black; padding: 10px; margin-top: 10px; height: 200px; overflow: auto;"></div>
+
+  </form>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('rl-agent-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const goal = document.getElementById('goal').value;
+      const response = await fetch('/run', {
+        method: 'POST',
+        body: new FormData(event.target),
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      const result = await response.json();
+      document.getElementById('result').textContent = result.result;
+    });
+
+    function runAgent() {
+      const goal = document.getElementById("goal").value;
+      fetch("/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ goal: goal }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const output = document.getElementById("output");
+          output.innerHTML += `<p>${data.result}</p>`;
+
+          // Display agent output
+          for (const item of data.agent_output) {
+            output.innerHTML += `<p>Step ${item.step}: ${item.action} - ${item.status}</p>`;
+          }
+        });
+    }
+
+  </script>
+</body>
+
+</html>

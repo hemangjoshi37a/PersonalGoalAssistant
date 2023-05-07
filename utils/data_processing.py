@@ -13,3 +13,13 @@ def preprocess_data(data_path, preprocessed_data_path):
 
 def load_preprocessed_data(preprocessed_data_path):
     return pd.read_csv(preprocessed_data_path)
+
+# Add this function to utils/data_processing.py
+def generate_embeddings(preprocessed_data):
+    # Implement the logic to generate embeddings for each data type
+    # ...
+
+    # Combine embeddings into a single list or array
+    embeddings = []
+
+    return embeddings

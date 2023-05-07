@@ -1,4 +1,4 @@
-    from stable_baselines3 import PPO
+from stable_baselines3 import PPO
 
 class RLAgent:
     def __init__(self, env):
