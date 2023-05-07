@@ -1,0 +1,6 @@
+numpy
+pandas
+gym
+torch
+stable-baselines3
+opencv-python
