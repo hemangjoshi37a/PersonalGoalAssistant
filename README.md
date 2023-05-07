@@ -25,7 +25,7 @@ This project uses [Milvus](https://milvus.io/) for storing and managing multi-mo
 
 ### Setup
 
-1. Make sure you have a running Milvus instance. Follow the [official Milvus installation guide](https://milvus.io/docs/v2.0.0/install_standalone-docker.md) to set up a local Milvus instance using Docker.
+1. Make sure you have a running Milvus instance. Follow the [official Milvus installation guide](https://milvus.io/docs/v2.3.0-beta/install_standalone-operator.md) to set up a local Milvus instance using Docker.
 
 2. Install the Milvus Python SDK:
 
@@ -41,4 +41,4 @@ The `utils/milvus_storage.py` file contains functions to create a Milvus collect
 
 2. Use the functions in `utils/milvus_storage.py` to create a Milvus collection and insert the embeddings.
 
-For more information on working with Milvus, refer to the [official Milvus documentation](https://milvus.io/docs/overview.md).
+For more information on working with Milvus, refer to the [official Milvus documentation](https://milvus.io/docs/overview.md)
