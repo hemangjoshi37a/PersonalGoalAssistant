@@ -5,55 +5,99 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RL Agent Interface</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .output-container {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .output-container h5 {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 
-<body>
-  <h1>Reinforcement Learning Agent Interface</h1>
-  <form id="rl-agent-form">
-    <label for="goal">Goal:</label>
-    <input type="text" id="goal" name="goal" required>
-    <button type="submit">Run RL Agent</button>
-    <!-- Add this element after the button -->
-    <div id="output" style="border: 1px solid black; padding: 10px; margin-top: 10px; height: 200px; overflow: auto;"></div>
-
-  </form>
-  <div id="result"></div>
+<body class="bg-light">
+  <div class="container my-5">
+    <h1 class="text-center mb-4">Reinforcement Learning Agent Interface</h1>
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-body">
+            <form id="rl-agent-form">
+              <div class="mb-3">
+                <label for="goal" class="form-label">Goal:</label>
+                <input type="text" class="form-control" id="goal" name="goal" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Run RL Agent</button>
+            </form>
+          </div>
+        </div>
+        <div class="output-container">
+          <h5>Output</h5>
+          <div id="output" style="height: 200px; overflow: auto;"></div>
+        </div>
+        <div class="output-container">
+          <h5>Generated Subtasks</h5>
+          <div id="subtasks" style="height: 200px; overflow: auto;"></div>
+        </div>
+        <div class="output-container">
+          <h5>Result</h5>
+          <div id="result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     document.getElementById('rl-agent-form').addEventListener('submit', async (event) => {
       event.preventDefault();
-      const goal = document.getElementById('goal').value;
-      const response = await fetch('/run', {
-        method: 'POST',
-        body: new FormData(event.target),
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      const result = await response.json();
-      document.getElementById('result').textContent = result.result;
+      runAgent();
     });
 
-    function runAgent() {
+    async function runAgent() {
       const goal = document.getElementById("goal").value;
-      fetch("/run", {
+      const button = document.querySelector("#rl-agent-form button[type='submit']");
+      button.disabled = true;
+      button.textContent = "Processing...";
+
+      const output = document.getElementById("output");
+      output.innerHTML += `<p>Debug: Sending request to /run</p>`;
+
+      const response = await fetch("/run", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ goal: goal }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const output = document.getElementById("output");
-          output.innerHTML += `<p>${data.result}</p>`;
+      });
 
-          // Display agent output
-          for (const item of data.agent_output) {
-            output.innerHTML += `<p>Step ${item.step}: ${item.action} - ${item.status}</p>`;
-          }
-        });
+      const data = await response.json();
+      output.innerHTML += `<p>Debug: Received response from /run</p>`;
+
+      // Display generated subtasks
+      const subtasksContainer = document.getElementById("subtasks");
+      subtasksContainer.innerHTML = "<ol>";
+      for (const subtask of data.subtasks) {
+        subtasksContainer.innerHTML += `<li>${subtask}</li>`;
+      }
+      subtasksContainer.innerHTML += "</ol>";
+
+      // Display agent output
+      for (const item of data.agent_output) {
+        output.innerHTML += `<p>Step ${item.step}: ${item.action} - ${item.status}</p>`;
+      }
+      // Display result
+      const resultContainer = document.getElementById("result");
+      resultContainer.innerHTML = `<p>${data.result}</p>`;
+
+      button.disabled = false;
+      button.textContent = "Run RL Agent";
     }
-
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 
 </html>
