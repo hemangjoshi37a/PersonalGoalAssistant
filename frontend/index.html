@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Assistant | Your Autonomous Executive Agent</title>
+    <meta name="description" content="Harness the power of reinforcement learning with the Personal Goal Assistant. Autonomous planning and execution for your complex objectives.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;600;700&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">GOAL.AI</div>
+        <div class="nav-links" style="display: flex; gap: 2rem;">
+            <a href="#features" style="color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Features</a>
+            <a href="#app-section" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.8rem;">Launch App</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-badge">Autonomous Execution Engine v2.0</div>
+        <h1>Your Personal <span>Autonomous</span> Goal Executive</h1>
+        <p>A reinforcement learning agent that plans, mimics behavior, and executes complex objectives while you focus on the big picture.</p>
+        <div class="cta-group">
+            <a href="#app-section" class="btn btn-primary">Start Your First Goal</a>
+            <a href="#features" class="btn btn-secondary">Explore Capabilities</a>
+        </div>
+    </header>
+
+    <section id="features" class="features">
+        <div class="feature-card">
+            <div class="feature-icon"><i data-lucide="zap"></i></div>
+            <h3>Autonomous Logic</h3>
+            <p>Generates strategic roadmaps and executes subtasks with precision using reinforcement learning models.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i data-lucide="brain-circuit"></i></div>
+            <h3>Multi-Modal Memory</h3>
+            <p>Powered by Milvus vector storage to manage and retrieve user patterns and historical goal data.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i data-lucide="shield-check"></i></div>
+            <h3>Mimicry Engine</h3>
+            <p>Learns from your workflow to complete tasks exactly how you would, ensuring high-quality results.</p>
+        </div>
+    </section>
+
+    <section id="app-section">
+        <div class="section-header">
+            <h2>Agent Control Center</h2>
+            <p style="color: var(--text-dim);">Define your objective and watch the agent materialize your goals.</p>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <form id="rl-agent-form">
+                    <div class="input-container">
+                        <label for="goal">
+                            <i data-lucide="target" style="width: 16px;"></i>
+                            Strategic Objective
+                        </label>
+                        <input type="text" id="goal" name="goal" placeholder="e.g. Research and summarize latest breakthroughs in Fusion Energy..." required>
+                    </div>
+                    
+                    <div id="settings-trigger" class="settings-toggle" style="display: flex; align-items: center; gap: 0.5rem; color: hsla(var(--primary), 1); cursor: pointer; margin-bottom: 1.5rem; font-size: 0.8rem; font-weight: 700;">
+                        <i data-lucide="sliders" style="width: 14px;"></i>
+                        AGENT CONFIGURATION
+                    </div>
+
+                    <div id="settings-panel" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;">
+                        <div class="input-container" style="margin-top: 1rem;">
+                            <label for="backend-url">Node Endpoint</label>
+                            <input type="text" id="backend-url" value="http://localhost:5000" placeholder="http://localhost:5000">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 1rem;">
+                        <i data-lucide="power" style="width: 18px;"></i>
+                        INITIATE AGENT
+                    </button>
+                </form>
+                <div id="connection-status" class="status-badge" style="display: none; margin-top: 1rem; text-align: center; width: 100%;">Connecting...</div>
+            </div>
+
+            <div class="output-grid">
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <i data-lucide="terminal" style="width: 16px; color: hsla(var(--accent), 1);"></i>
+                        <h5>Execution Stream</h5>
+                    </div>
+                    <div id="output" class="scroll-viewport"></div>
+                </div>
+                
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <i data-lucide="git-branch" style="width: 16px; color: hsla(var(--accent), 1);"></i>
+                        <h5>Strategic Roadmap</h5>
+                    </div>
+                    <div id="subtasks" class="scroll-viewport"></div>
+                </div>
+            </div>
+
+            <div id="final-card" class="card" style="margin-top: 3rem; text-align: center; border-color: rgba(63, 185, 80, 0.2); display: none;">
+                <label style="justify-content: center; margin-bottom: 1rem; color: #3fb950;">
+                    <i data-lucide="check-circle" style="width: 16px;"></i>
+                    Final Resolution
+                </label>
+                <div id="result" style="font-size: 1.25rem; font-weight: 800; color: white;">
+                    Standby - Awaiting Command
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer style="padding: 4rem 10%; border-top: 1px solid var(--border); text-align: center; color: var(--text-dim); font-size: 0.8rem;">
+        <p>&copy; 2026 Personal Goal Assistant. Powered by RL & Milvus.</p>
+    </footer>
+
+    <!-- Vite Entry Point -->
+    <script type="module" src="/main.js"></script>
+</body>
+</html>

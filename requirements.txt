@@ -4,3 +4,9 @@ gym
 torch
 stable-baselines3
 opencv-python
+flask
+transformers
+pyautogui
+pymilvus
+Pillow
+flask-cors
