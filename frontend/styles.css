@@ -1,0 +1,319 @@
+:root {
+  --bg-color: #030508;
+  --panel-bg: rgba(13, 17, 23, 0.6);
+  --primary: 210, 100%, 56%; /* #1e90ff equivalent but in HSL for control */
+  --secondary: 230, 100%, 67%;
+  --accent: 190, 100%, 50%;
+  --text-main: #f0f6fc;
+  --text-dim: #8b949e;
+  --border: rgba(48, 54, 61, 0.4);
+  --glass: blur(12px) saturate(180%);
+  --nav-height: 80px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 20% 20%, hsla(var(--primary), 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, hsla(var(--secondary), 0.1) 0%, transparent 40%);
+}
+
+/* Typography Enhancements */
+h1, h2, h3 {
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+/* Navigation */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: var(--nav-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+  background: rgba(3, 5, 8, 0.8);
+  backdrop-filter: var(--glass);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fff, hsla(var(--primary), 1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hero Section */
+.hero {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 10%;
+  position: relative;
+}
+
+.hero-badge {
+  background: hsla(var(--primary), 0.1);
+  border: 1px solid hsla(var(--primary), 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: hsla(var(--primary), 1);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  margin-bottom: 1.5rem;
+  max-width: 900px;
+}
+
+.hero h1 span {
+  color: hsla(var(--accent), 1);
+}
+
+.hero p {
+  font-size: 1.25rem;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-bottom: 3rem;
+}
+
+/* CTA Buttons */
+.cta-group {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.btn {
+  padding: 1rem 2.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: hsla(var(--primary), 1);
+  color: white;
+  border: none;
+  box-shadow: 0 10px 20px hsla(var(--primary), 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px hsla(var(--primary), 0.5);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: white;
+}
+
+/* Features Section */
+.features {
+  padding: 100px 10%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass);
+  border: 1px solid var(--border);
+  padding: 3rem 2rem;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  border-color: hsla(var(--primary), 0.5);
+  transform: translateY(-10px);
+}
+
+.feature-icon {
+  width: 50px;
+  height: 50px;
+  background: hsla(var(--primary), 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsla(var(--primary), 1);
+  margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+  margin-bottom: 1rem;
+}
+
+.feature-card p {
+  color: var(--text-dim);
+}
+
+/* Agent Interface Wrapper */
+#app-section {
+  padding: 100px 5%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: radial-gradient(circle at center, rgba(31, 111, 235, 0.05) 0%, transparent 70%);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.container {
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* Re-styling the existing tool components */
+.card {
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+}
+
+.input-container label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: hsla(var(--primary), 1);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+input[type="text"] {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  border-radius: 16px;
+  color: white;
+  width: 100%;
+  font-size: 1.1rem;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: hsla(var(--primary), 1);
+}
+
+.output-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.glass-panel {
+  background: rgba(13, 17, 23, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.panel-header h5 {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+.scroll-viewport {
+  overflow-y: auto;
+  flex-grow: 1;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+}
+
+.subtask-card {
+  padding: 1rem;
+  background: rgba(30, 144, 255, 0.05);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid hsla(var(--primary), 1);
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@media (max-width: 800px) {
+  .output-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 3rem; }
+  .cta-group { flex-direction: column; width: 100%; }
+}
+
