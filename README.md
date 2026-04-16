@@ -2,7 +2,7 @@
 
 A reinforcement learning-based personal goal assistant that mimics user behavior and operates autonomously to achieve user-defined goals.
 
-![Personal Goal Assistant - Glass Intelligence Dashboard](./docs/assets/latest_screenshot.png)
+![Personal Goal Assistant](./.assets/images/landing_page.png.png)
 
 ## Installation
 
