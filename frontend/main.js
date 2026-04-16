@@ -1,3 +1,5 @@
+import { Background3D } from './background.js';
+
 // UI Selectors
 const form = document.getElementById('rl-agent-form');
 const submitBtn = document.getElementById('submit-btn');
@@ -11,6 +13,25 @@ const settingsPanel = document.getElementById('settings-panel');
 
 // Initialize Lucide Icons
 lucide.createIcons();
+
+// Scroll Reveal Logic
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.reveal, .stagger-reveal').forEach(el => observer.observe(el));
+
+// Initialize 3D Background
+new Background3D();
 
 // Settings Toggle Logic
 settingsTrigger.addEventListener('click', () => {
