@@ -27,9 +27,16 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 20% 20%, hsla(var(--primary), 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, hsla(var(--secondary), 0.1) 0%, transparent 40%);
+}
+
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* Typography Enhancements */
@@ -311,9 +318,184 @@ input[type="text"]:focus {
   100% { transform: translateY(0px); }
 }
 
-@media (max-width: 800px) {
-  .output-grid { grid-template-columns: 1fr; }
-  .hero h1 { font-size: 3rem; }
-  .cta-group { flex-direction: column; width: 100%; }
+
+/* Animations & Reveals */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-reveal > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stagger-reveal.active > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-reveal.active > *:nth-child(1) { transition-delay: 0.1s; }
+.stagger-reveal.active > *:nth-child(2) { transition-delay: 0.2s; }
+.stagger-reveal.active > *:nth-child(3) { transition-delay: 0.3s; }
+.stagger-reveal.active > *:nth-child(4) { transition-delay: 0.4s; }
+
+/* Process Section */
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-top: 4rem;
+  position: relative;
+}
+
+.process-step {
+  text-align: center;
+  position: relative;
+}
+
+.process-step::after {
+  content: '→';
+  position: absolute;
+  right: -1rem;
+  top: 1.5rem;
+  font-size: 1.5rem;
+  color: var(--border);
+}
+
+.process-step:last-child::after { content: none; }
+
+.step-number {
+  width: 50px;
+  height: 50px;
+  background: hsla(var(--primary), 0.1);
+  border: 1px solid hsla(var(--primary), 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: hsla(var(--primary), 1);
+}
+
+/* Use Cases Section */
+.use-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.use-case-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.use-case-card:hover {
+  border-color: hsla(var(--accent), 0.5);
+  transform: scale(1.02);
+}
+
+.use-case-img {
+  height: 160px;
+  background: linear-gradient(135deg, hsla(var(--primary), 0.1), hsla(var(--secondary), 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.use-case-content {
+  padding: 1.5rem;
+}
+
+/* Milvus Section */
+.milvus-section {
+  background: radial-gradient(circle at 80% 20%, hsla(var(--accent), 0.05) 0%, transparent 50%);
+  padding: 100px 10%;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+  margin: 100px 5%;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.milvus-visual {
+  position: relative;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vector-node {
+  width: 10px;
+  height: 10px;
+  background: hsla(var(--accent), 1);
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 0 15px hsla(var(--accent), 0.5);
+  animation: pulse-glow 2s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from { opacity: 0.4; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
+/* Footer Links Styling */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 4rem;
+  text-align: left;
+  margin-bottom: 4rem;
+}
+
+.footer-socials {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.social-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--text-dim);
+}
+
+.social-icon:hover {
+  background: hsla(var(--primary), 1);
+  color: white;
+  transform: translateY(-3px);
+}
+
+@media (max-width: 1000px) {
+  .process-grid { grid-template-columns: repeat(2, 1fr); }
+  .process-step::after { content: none; }
+  .milvus-section { grid-template-columns: 1fr; text-align: center; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .footer-grid { grid-template-columns: 1fr; }
 }
 
