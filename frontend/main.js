@@ -10,6 +10,14 @@ const statusBadge = document.getElementById('connection-status');
 const finalCard = document.getElementById('final-card');
 const settingsTrigger = document.getElementById('settings-trigger');
 const settingsPanel = document.getElementById('settings-panel');
+const reportSection = document.getElementById('mission-report-section');
+const reportContent = document.getElementById('report-content');
+const copyBtn = document.getElementById('copy-report-btn');
+const downloadBtn = document.getElementById('download-report-btn');
+const processingView = document.getElementById('processing-view');
+const processingText = document.getElementById('processing-text');
+const progressBarParent = document.getElementById('mission-progress-parent');
+const progressBarFill = document.getElementById('mission-progress-fill');
 
 // Initialize Lucide Icons
 lucide.createIcons();
@@ -51,12 +59,14 @@ form.addEventListener('submit', async (e) => {
     submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width: 18px;"></i> SYNCHRONIZING...';
     lucide.createIcons();
     
-    output.innerHTML = '<div style="color:var(--text-dim)">Initializing neural link...</div>';
+    output.innerHTML = '';
     subtasksContainer.innerHTML = '';
-    resultContainer.textContent = 'Processing...';
+    reportContent.innerHTML = '';
+    reportSection.style.display = 'none';
+    processingView.style.display = 'block';
     finalCard.style.display = 'none';
     statusBadge.style.display = 'block';
-    statusBadge.textContent = 'Linking with Brain...';
+    statusBadge.textContent = 'Synchronizing with Life Engine...';
     statusBadge.style.color = 'hsla(var(--primary), 1)';
 
     try {
@@ -69,7 +79,7 @@ form.addEventListener('submit', async (e) => {
         if (!response.ok) throw new Error(`Status ${response.status}`);
 
         const data = await response.json();
-        statusBadge.textContent = 'Link Established';
+        statusBadge.textContent = 'Mission Ready';
         statusBadge.style.color = '#3fb950';
 
         // Clear placeholder
@@ -99,20 +109,26 @@ form.addEventListener('submit', async (e) => {
                     output.appendChild(log);
                     output.scrollTop = output.scrollHeight;
 
-                    // Show final card after last log
+                    // Show final outcomes after last log
                     if (index === data.agent_output.length - 1) {
                         setTimeout(() => {
+                            // Render Final Mission Report
+                            renderMissionReport(goal, data.subtasks);
+                            
                             finalCard.style.display = 'block';
                             finalCard.style.animation = 'fadeIn 0.5s ease-out';
-                            resultContainer.textContent = data.result || 'Goal Achieved Successfully.';
+                            resultContainer.textContent = data.result || 'Mission Objectives Materialized Successfully.';
                         }, 500);
                     }
-                }, index * 200 + 500);
+                }, index * 200 + 1000);
             });
         } else {
-            // If no logs but result exists
+            // If no logs but result exists, still try to render report if subtasks exist
+            if (data.subtasks && data.subtasks.length > 0) {
+                renderMissionReport(goal, data.subtasks);
+            }
             finalCard.style.display = 'block';
-            resultContainer.textContent = data.result || 'Task completed.';
+            resultContainer.textContent = data.result || 'Mission completed.';
         }
 
     } catch (error) {
@@ -123,13 +139,163 @@ form.addEventListener('submit', async (e) => {
         resultContainer.textContent = `Termination: ${error.message}`;
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i data-lucide="power" style="width: 18px;"></i> INITIATE AGENT';
+        submitBtn.innerHTML = '<i data-lucide="play" style="width: 18px;"></i> INITIATE MISSION';
         lucide.createIcons();
     }
 });
 
-// Spin animation and Global Overrides
+// Report Logic
+const renderMissionReport = (goal, subtasks) => {
+    processingView.style.display = 'none';
+    progressBarParent.style.display = 'block';
+    reportSection.style.display = 'block';
+    reportSection.classList.add('active');
+    
+    // Check for saved progress for this goal
+    const savedState = JSON.parse(localStorage.getItem(`goal_${goal}`)) || {};
+    
+    let html = `<h2>Mission Outcome: ${goal}</h2>`;
+    html += `<p>Interactive Checklist: Track your execution progress below.</p>`;
+    html += `<div class="checklist">`;
+    
+    subtasks.forEach((task, index) => {
+        if (task.trim()) {
+            const isChecked = savedState[index] ? 'checked' : '';
+            const completedClass = savedState[index] ? 'completed' : '';
+            html += `
+                <div class="task-item ${completedClass}" data-index="${index}">
+                    <input type="checkbox" class="task-checkbox" ${isChecked}>
+                    <span>${task}</span>
+                </div>`;
+        }
+    });
+    
+    html += `</div>`;
+    html += `<p style="margin-top: 2rem; color: var(--text-dim); font-size: 0.8rem;"><i>&copy; Generated by Goal.Personal Autonomous Executive</i></p>`;
+    
+    reportContent.innerHTML = html;
+    updateProgress(goal);
+    
+    // Add Event Listeners for checkboxes
+    const checkboxes = reportContent.querySelectorAll('.task-checkbox');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const item = e.target.closest('.task-item');
+            const index = item.getAttribute('data-index');
+            
+            if (e.target.checked) {
+                item.classList.add('completed');
+            } else {
+                item.classList.remove('completed');
+            }
+            
+            saveGoalProgress(goal, index, e.target.checked);
+            updateProgress(goal);
+        });
+    });
+    
+    reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+const saveGoalProgress = (goal, index, isChecked) => {
+    const key = `goal_${goal}`;
+    const state = JSON.parse(localStorage.getItem(key)) || {};
+    state[index] = isChecked;
+    localStorage.setItem(key, JSON.stringify(state));
+};
+
+const updateProgress = (goal) => {
+    const key = `goal_${goal}`;
+    const state = JSON.parse(localStorage.getItem(key)) || {};
+    const items = document.querySelectorAll('.task-item');
+    
+    if (items.length === 0) return;
+    
+    const completedCount = Object.values(state).filter(val => val === true).length;
+    const percentage = (completedCount / items.length) * 100;
+    
+    progressBarFill.style.width = `${percentage}%`;
+    
+    if (percentage === 100) {
+        progressBarFill.style.background = 'linear-gradient(to right, #3fb950, #2ea043)';
+    } else {
+        progressBarFill.style.background = 'linear-gradient(to right, hsla(var(--primary), 1), hsla(var(--accent), 1))';
+    }
+};
+
+copyBtn.addEventListener('click', () => {
+    const text = reportContent.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const originalIcon = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i data-lucide="check" style="width: 16px;"></i>';
+        lucide.createIcons();
+        setTimeout(() => {
+            copyBtn.innerHTML = originalIcon;
+            lucide.createIcons();
+        }, 2000);
+    });
+});
+
+downloadBtn.addEventListener('click', () => {
+    const text = reportContent.innerText;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Mission_Report_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// Zenith Animations & Interactivity
+const setupZenith = () => {
+    // 1. Counter Animations
+    const counters = document.querySelectorAll('.stat-value[data-target]');
+    const animateCounters = () => {
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            let count = 0;
+            const increment = target / 100;
+            const updateCount = () => {
+                if (count < target) {
+                    count += increment;
+                    counter.innerText = Math.ceil(count).toLocaleString() + (target > 500 ? '+' : '');
+                    setTimeout(updateCount, 20);
+                } else {
+                    counter.innerText = target.toLocaleString() + (target > 500 ? '+' : '');
+                }
+            };
+            updateCount();
+        });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounters();
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    const dashboard = document.querySelector('.success-dashboard');
+    if (dashboard) observer.observe(dashboard);
+
+    // 2. Blueprint Interaction
+    const blueprints = document.querySelectorAll('.blueprint-pill');
+    blueprints.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const goalInput = document.getElementById('goal');
+            goalInput.value = pill.innerText;
+            goalInput.focus();
+            goalInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+};
+
+// Global Overrides & Initialization
 const setupUX = () => {
+    setupZenith();
     const style = document.createElement('style');
     style.innerHTML = `
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

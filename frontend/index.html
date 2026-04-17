@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goal Assistant | Your Autonomous Executive Agent</title>
-    <meta name="description" content="Harness the power of reinforcement learning with the Personal Goal Assistant. Autonomous planning and execution for your complex objectives.">
+    <title>Personal Goal Assistant | Your Autonomous Life Executive</title>
+    <meta name="description" content="Harness the power of reinforcement learning with the Personal Goal Assistant. Autonomous planning and execution for your personal growth and lifestyle objectives.">
     <link rel="stylesheet" href="/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     <nav>
-        <div class="logo">GOAL.AI</div>
+        <div class="logo">GOAL.PERSONAL</div>
         <div class="nav-links" style="display: flex; gap: 2rem; align-items: center;">
             <a href="#how-it-works" style="color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Process</a>
             <a href="#modules" style="color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Modules</a>
@@ -25,25 +25,40 @@
     </nav>
 
     <header class="hero">
-        <div class="hero-badge reveal">Autonomous Execution Engine v2.0</div>
-        <h1 class="reveal">Your Personal <span>Autonomous</span> Goal Executive</h1>
-        <p class="reveal">A reinforcement learning agent that plans, mimics behavior, and executes complex objectives while you focus on the big picture.</p>
+        <div class="hero-badge reveal">Autonomous Personal Executive v2.0</div>
+        <h1 class="reveal">Your <span>Autonomous</span> Personal Goal Partner</h1>
+        <p class="reveal">A reinforcement learning agent that plans, mimics behavior, and executes your lifestyle objectives—from health habits to skill mastery.</p>
         <div class="cta-group reveal">
             <a href="#app-section" class="btn btn-primary">Initiate Control</a>
             <a href="#how-it-works" class="btn btn-secondary">System Overview</a>
         </div>
     </header>
 
+    <div class="success-dashboard reveal">
+        <div class="stat-item">
+            <span class="stat-value" data-target="1240">0</span>
+            <span class="stat-label">Missions Synthesized</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">98.4%</span>
+            <span class="stat-label">Strategic Accuracy</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" data-target="15200">0</span>
+            <span class="stat-label">Hours Reclaimed</span>
+        </div>
+    </div>
+
     <section id="how-it-works" style="padding: 100px 10%; text-align: center;">
         <div class="section-header reveal">
-            <h2>Cognitive Pipeline</h2>
-            <p>Our four-stage autonomous workflow ensures goals are met with surgical precision.</p>
+            <h2>Your Path to Mastery</h2>
+            <p>Our four-stage autonomous workflow handles the complexity of personal growth.</p>
         </div>
         <div class="process-grid stagger-reveal">
             <div class="process-step">
                 <div class="step-number">01</div>
-                <h3>Formulate</h3>
-                <p>Cognitive planner breaks goals into strategic subtasks.</p>
+                <h3>Dream</h3>
+                <p>The planner breaks your big dreams into actionable daily subtasks.</p>
             </div>
             <div class="process-step">
                 <div class="step-number">02</div>
@@ -53,25 +68,25 @@
             <div class="process-step">
                 <div class="step-number">03</div>
                 <h3>Execute</h3>
-                <p>RL Agent performs desktop actions via high-fidelity mimicry.</p>
+                <p>The agent handles the digital legwork through high-fidelity mimicry.</p>
             </div>
             <div class="process-step">
                 <div class="step-number">04</div>
-                <h3>Refine</h3>
-                <p>System learns from outcomes to optimize future executions.</p>
+                <h3>Achieve</h3>
+                <p>System learns your preferences to optimize every future goal.</p>
             </div>
         </div>
     </section>
 
     <section id="modules" style="padding: 100px 10%; background: rgba(255,255,255,0.02);">
         <div class="section-header reveal" style="text-align: center;">
-            <h2>Integrated Core Systems</h2>
+            <h2>Lifestyle Engine Core</h2>
         </div>
         <div class="features stagger-reveal" style="padding: 0;">
             <div class="feature-card">
                 <div class="feature-icon"><i data-lucide="brain"></i></div>
-                <h3>Adaptive Planner</h3>
-                <p>Utilizes advanced LLM logic to derive optimal execution paths for undefined objectives.</p>
+                <h3>Life Planner</h3>
+                <p>Derives optimal paths for your unique personal objectives and lifestyle.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon"><i data-lucide="mouse-pointer-2"></i></div>
@@ -80,29 +95,28 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon"><i data-lucide="database"></i></div>
-                <h3>Memory Fabric</h3>
-                <p>Scaleable Milvus vector storage for multi-modal context and user behavioral data.</p>
+                <h3>Habit Vault</h3>
+                <p>Safe Milvus vector storage for your personal behavioral patterns and progress.</p>
             </div>
         </div>
     </section>
 
     <section id="milvus" class="milvus-section reveal">
         <div class="milvus-content">
-            <div class="hero-badge">Vector Memory Powered by Milvus</div>
-            <h2 style="margin: 1.5rem 0;">Long-term Multi-modal Memory</h2>
-            <p style="color: var(--text-dim); margin-bottom: 2rem;">The Goal Assistant doesn't just act; it remembers. Every interaction is vectorized and stored in a high-performance Milvus database, allowing for near-instant retrieval of complex behavioral patterns and context.</p>
+            <h2 style="margin: 1.5rem 0;">A Personal Brain for Your Goals</h2>
+            <p style="color: var(--text-dim); margin-bottom: 2rem;">The Assistant doesn't just plan; it remembers. Your previous successes and preferences are vectorized and stored, creating a personalized blueprint for everything you want to achieve.</p>
             <ul style="list-style: none; color: white;">
-                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Sub-millisecond vector similarity search</li>
-                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Multi-modal data handling (Text, Code, UI)</li>
-                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Scalable infrastructure for infinite goals</li>
+                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Intelligent preference retrieval</li>
+                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Cross-device habit syncing</li>
+                <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Secure, private personal data memory</li>
             </ul>
         </div>
         <div class="milvus-visual">
-            <div class="vector-node" style="top: 20%; left: 30%;"></div>
-            <div class="vector-node" style="top: 60%; left: 10%; animation-delay: 0.5s;"></div>
-            <div class="vector-node" style="top: 40%; left: 80%; animation-delay: 1s;"></div>
-            <div class="vector-node" style="top: 80%; left: 50%; animation-delay: 1.5s;"></div>
-            <div class="vector-node" style="top: 10%; left: 70%; animation-delay: 0.2s;"></div>
+            <div class="neural-node" style="top: 20%; left: 30%;"></div>
+            <div class="neural-node" style="top: 60%; left: 10%; animation-delay: 0.5s;"></div>
+            <div class="neural-node" style="top: 40%; left: 80%; animation-delay: 1s;"></div>
+            <div class="neural-node" style="top: 80%; left: 50%; animation-delay: 1.5s;"></div>
+            <div class="neural-node" style="top: 10%; left: 70%; animation-delay: 0.2s;"></div>
             <!-- Connection lines simulated by SVG -->
             <svg style="position: absolute; width: 100%; height: 100%; opacity: 0.2;">
                 <line x1="30%" y1="20%" x2="70%" y2="10%" stroke="white" stroke-width="1" />
@@ -116,31 +130,46 @@
 
     <section id="use-cases" style="padding: 100px 10%;">
         <div class="section-header reveal" style="text-align: center;">
-            <h2>Deployment Scenarios</h2>
-            <p>Versatile automation across your entire digital workspace.</p>
+            <h2>Personal Missions</h2>
+            <p>From micro-habits to life-changing transformations.</p>
         </div>
         <div class="use-cases-grid stagger-reveal">
             <div class="use-case-card">
-                <div class="use-case-img"><i data-lucide="search" style="width: 40px; height: 40px;"></i></div>
+                <div class="use-case-img"><i data-lucide="heart" style="width: 40px; height: 40px;"></i></div>
                 <div class="use-case-content">
-                    <h4>Autonomous Research</h4>
-                    <p>Scouring the web, synthesizing findings, and generating structured reports automatically.</p>
+                    <h4>Health & Wellness</h4>
+                    <p>Automate your fitness journey, from meal prep scheduling to tracking your morning routines.</p>
                 </div>
             </div>
             <div class="use-case-card">
-                <div class="use-case-img"><i data-lucide="code" style="width: 40px; height: 40px;"></i></div>
+                <div class="use-case-img"><i data-lucide="book-open" style="width: 40px; height: 40px;"></i></div>
                 <div class="use-case-content">
-                    <h4>DevOps Orchestration</h4>
-                    <p>Configuring environments, managing pipelines, and fixing build errors through UI mimicry.</p>
+                    <h4>Skill Acquisition</h4>
+                    <p>Master new languages or instruments with an agent that finds resources and builds your curriculum.</p>
                 </div>
             </div>
             <div class="use-case-card">
-                <div class="use-case-img"><i data-lucide="layout" style="width: 40px; height: 40px;"></i></div>
+                <div class="use-case-img"><i data-lucide="clapperboard" style="width: 40px; height: 40px;"></i></div>
                 <div class="use-case-content">
-                    <h4>Workflow Automation</h4>
-                    <p>Bridges the gap between siloed applications by acting as the glue in your daily desktop operations.</p>
+                    <h4>Lifestyle Logistics</h4>
+                    <p>Offload the "admin of life"—travel planning, appointment booking, and gift reminders.</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="blueprints" style="padding: 100px 10%; background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(255, 255, 255, 0.02)); border-bottom: 1px solid var(--border);">
+        <div class="section-header reveal" style="text-align: center;">
+            <h2>Verified Blueprints</h2>
+            <p>Ready-to-launch expert goals verified by our strategic engine.</p>
+        </div>
+        <div class="blueprint-scroll">
+            <div class="blueprint-pill">3-Month Marathon</div>
+            <div class="blueprint-pill">Python Mastery</div>
+            <div class="blueprint-pill">Daily Mindfulness</div>
+            <div class="blueprint-pill">Public Speaking</div>
+            <div class="blueprint-pill">Financial Freedom</div>
+            <div class="blueprint-pill">Guitar Foundations</div>
         </div>
     </section>
 
@@ -155,10 +184,28 @@
                 <form id="rl-agent-form">
                     <div class="input-container">
                         <label for="goal">
-                            <i data-lucide="target" style="width: 16px;"></i>
-                            Strategic Objective
+                            <i data-lucide="sparkles" style="width: 16px;"></i>
+                            Your Personal Mission
                         </label>
-                        <input type="text" id="goal" name="goal" placeholder="e.g. Design a multi-modal marketing campaign for my new SaaS..." required>
+                        <input type="text" id="goal" name="goal" placeholder="e.g. Plan a 3-month marathon training program for a beginner..." required>
+                    </div>
+
+                    <div class="intensity-group">
+                        <label style="margin-bottom: 0.5rem; display: block; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Mission Intensity</label>
+                        <div class="intensity-options">
+                            <label class="intensity-option">
+                                <input type="radio" name="intensity" value="blitz">
+                                <span>⚡ Blitz</span>
+                            </label>
+                            <label class="intensity-option">
+                                <input type="radio" name="intensity" value="balanced" checked>
+                                <span>🛡️ Balanced</span>
+                            </label>
+                            <label class="intensity-option">
+                                <input type="radio" name="intensity" value="mastery">
+                                <span>💎 Mastery</span>
+                            </label>
+                        </div>
                     </div>
                     
                     <div id="settings-trigger" class="settings-toggle" style="display: flex; align-items: center; gap: 0.5rem; color: hsla(var(--primary), 1); cursor: pointer; margin-bottom: 1.5rem; font-size: 0.8rem; font-weight: 700;">
@@ -174,14 +221,19 @@
                     </div>
 
                     <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 1rem;">
-                        <i data-lucide="power" style="width: 18px;"></i>
-                        COLLABORATE WITH AGENT
+                        <i data-lucide="play" style="width: 18px;"></i>
+                        START YOUR JOURNEY
                     </button>
                 </form>
                 <div id="connection-status" class="status-badge" style="display: none; margin-top: 1rem; text-align: center; width: 100%;">Connecting...</div>
             </div>
 
-            <div class="output-grid">
+            <div id="processing-view" style="display: none; text-align: center; padding: 4rem 0;">
+                <div class="loader-circle"></div>
+                <p id="processing-text" style="color: var(--text-dim); margin-top: 1.5rem; font-weight: 500; letter-spacing: 1px;">CALIBRATING PERSONAL MISSION...</p>
+            </div>
+
+            <div class="output-grid" style="display: none;">
                 <div class="glass-panel">
                     <div class="panel-header">
                         <i data-lucide="terminal" style="width: 16px; color: hsla(var(--accent), 1);"></i>
@@ -196,6 +248,28 @@
                         <h5>Strategic Roadmap</h5>
                     </div>
                     <div id="subtasks" class="scroll-viewport"></div>
+                </div>
+            </div>
+
+            <!-- New Mission Report Section -->
+            <div id="mission-report-section" class="card reveal" style="margin-top: 3rem; display: none; border-color: hsla(var(--accent), 0.3);">
+                <div class="panel-header" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i data-lucide="file-check" style="width: 20px; color: hsla(var(--accent), 1);"></i>
+                        <h4 style="text-transform: uppercase; letter-spacing: 2px;">Final Mission Report</h4>
+                    </div>
+                    <div class="report-actions">
+                        <button id="copy-report-btn" class="btn-icon"><i data-lucide="copy" style="width: 16px;"></i></button>
+                        <button id="download-report-btn" class="btn-icon"><i data-lucide="download" style="width: 16px;"></i></button>
+                    </div>
+                </div>
+                
+                <div class="progress-bar-container" style="margin: 1.5rem 2rem 0; background: rgba(255,255,255,0.05); height: 8px; border-radius: 100px; overflow: hidden; display: none;" id="mission-progress-parent">
+                    <div id="mission-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(to right, hsla(var(--primary), 1), hsla(var(--accent), 1)); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 15px hsla(var(--accent), 0.5);"></div>
+                </div>
+                
+                <div id="report-content" class="document-view">
+                    <!-- Synthesized Plan will appear here -->
                 </div>
             </div>
 
@@ -214,8 +288,8 @@
     <footer style="background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); padding: 80px 10% 40px;">
         <div class="footer-grid">
             <div class="footer-about">
-                <div class="logo">GOAL.AI</div>
-                <p style="color: var(--text-dim); margin-top: 1.5rem; max-width: 300px;">The world's first adaptive reinforcement learning goal executive. Built for the future of autonomous desktop work.</p>
+                <div class="logo">GOAL.PERSONAL</div>
+                <p style="color: var(--text-dim); margin-top: 1.5rem; max-width: 300px;">The world's first autonomous personal goal execution system. Reclaiming your time for what matters most.</p>
                 <div class="footer-socials">
                     <a href="https://www.linkedin.com/in/hemang-joshi-046746aa" class="social-icon"><i data-lucide="linkedin"></i></a>
                     <a href="https://github.com/hemangjoshi37a" class="social-icon"><i data-lucide="github"></i></a>
