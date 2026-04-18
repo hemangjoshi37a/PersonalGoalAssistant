@@ -30,7 +30,7 @@ def run_agent():
     print(f"[*] Starting agent with goal: {goal}")
 
     # Generate subtasks
-    subtasks = generate_subtasks(f"Generate a list of subtasks for accomplishing the goal: {goal}")
+    subtasks = generate_subtasks(goal)
 
     # Execute the subtasks
     agent_output = []
@@ -45,7 +45,7 @@ def run_agent():
         })
 
     response = {
-        'result': f'RL agent ran successfully with goal: {goal}',
+        'result': f'Strategic objectives for "{goal}" have been materialized in the Mission Report.',
         'agent_output': agent_output,
         'subtasks': subtasks
     }

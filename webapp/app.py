@@ -21,7 +21,7 @@ def run_agent():
     goal = request.form.get('goal')
 
     # Generate subtasks
-    subtasks = generate_subtasks(f"Generate a list of subtasks for accomplishing the goal: {goal}")
+    subtasks = generate_subtasks(goal)
 
     # Execute the subtasks (replace this with actual execution)
     agent_output = []  # Initialize an empty list for agent output

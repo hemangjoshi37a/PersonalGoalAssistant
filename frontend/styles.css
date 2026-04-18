@@ -1,9 +1,9 @@
 :root {
   --bg-color: #030508;
   --panel-bg: rgba(13, 17, 23, 0.6);
-  --primary: 210, 100%, 56%; /* #1e90ff equivalent but in HSL for control */
-  --secondary: 230, 100%, 67%;
-  --accent: 190, 100%, 50%;
+  --primary: 215, 80%, 60%; /* Slightly softer, friendlier blue */
+  --secondary: 160, 60%, 50%; /* Growth emerald */
+  --accent: 170, 90%, 45%;    /* Vibrant Teal for growth */
   --text-main: #f0f6fc;
   --text-dim: #8b949e;
   --border: rgba(48, 54, 61, 0.4);
@@ -204,14 +204,121 @@ nav {
   background: radial-gradient(circle at center, rgba(31, 111, 235, 0.05) 0%, transparent 70%);
 }
 
+/* Section Headers */
 .section-header {
-  text-align: center;
   margin-bottom: 4rem;
 }
 
-.section-header h2 {
+/* Success Dashboard */
+.success-dashboard {
+  display: flex;
+  justify-content: space-around;
+  padding: 4rem 10%;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-value {
+  font-family: 'Outfit', sans-serif;
   font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-weight: 900;
+  color: hsla(var(--accent), 1);
+  background: linear-gradient(to bottom, white, hsla(var(--accent), 1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+/* Milvus Visual Enhancement */
+.neural-node {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: hsla(var(--accent), 1);
+  border-radius: 50%;
+  box-shadow: 0 0 20px hsla(var(--accent), 0.5);
+  animation: floatNodes 4s ease-in-out infinite;
+}
+
+@keyframes floatNodes {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(15px, -15px); }
+}
+
+/* Verified Blueprints */
+.blueprint-scroll {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scrollbar-width: none;
+}
+
+.blueprint-pill {
+  flex: 0 0 auto;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.blueprint-pill:hover {
+  background: hsla(var(--accent), 0.1);
+  border-color: hsla(var(--accent), 1);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Intensity Selector */
+.intensity-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.intensity-option input {
+  display: none;
+}
+
+.intensity-option span {
+  display: block;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.intensity-option input:checked + span {
+  background: hsla(var(--accent), 0.1);
+  border-color: hsla(var(--accent), 1);
+  color: white;
+  box-shadow: 0 0 15px hsla(var(--accent), 0.2);
 }
 
 .container {
@@ -309,6 +416,125 @@ input[type="text"]:focus {
   font-size: 0.8rem;
   font-weight: 700;
   display: inline-block;
+}
+
+/* Mission Report & Document View */
+.document-view {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.8;
+  color: var(--text-main);
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.document-view h1, .document-view h2 {
+  color: hsla(var(--accent), 1);
+  margin-bottom: 1.5rem;
+}
+
+.document-view p {
+  margin-bottom: 1rem;
+}
+
+.document-view ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.document-view li {
+  margin-bottom: 0.5rem;
+  list-style: none; /* We're using custom checkboxes */
+}
+
+/* Interactive Checklist Styles */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-item.completed span {
+  text-decoration: line-through;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+.task-checkbox {
+  appearance: none;
+  min-width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  margin-top: 3px;
+}
+
+.task-checkbox:checked {
+  background: hsla(var(--accent), 1);
+  border-color: hsla(var(--accent), 1);
+  box-shadow: 0 0 10px hsla(var(--accent), 0.5);
+}
+
+.task-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  padding-left: 0.5rem;
+}
+
+/* Loader Circle for Processing View */
+.loader-circle {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.05);
+  border-top: 4px solid hsla(var(--accent), 1);
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin 1s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+  box-shadow: 0 0 15px hsla(var(--accent), 0.2);
+}
+
+.btn-icon {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  background: hsla(var(--accent), 0.1);
+  color: hsla(var(--accent), 1);
+  border-color: hsla(var(--accent), 1);
 }
 
 /* Animations */
