@@ -1,17 +1,13 @@
-from agent.input_control import move_mouse_to, press_key, click
+import time
 
 def perform_subtask(subtask):
-    # This is a simple example; you should modify the function to execute more complex subtasks
-    if "move_mouse_to" in subtask:
-        x, y = map(int, subtask.split()[-2:])
-        move_mouse_to(x, y)
-        return "success"
-    elif "press_key" in subtask:
-        key = subtask.split()[-1]
-        press_key(key)
-        return "success"
-    elif "click" in subtask:
-        click()
-        return "success"
-    else:
-        return "unknown"
+    """
+    Simulates the execution of a subtask.
+    In a true industry-level setup, this would either dispatch to a worker queue
+    or await a user's confirmation of completion.
+    """
+    # Simulate processing time safely without locking the OS or moving the mouse
+    time.sleep(0.5)
+    
+    # Return a simulated success status
+    return "completed_simulation"

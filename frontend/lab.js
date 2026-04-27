@@ -39,7 +39,7 @@ export class ZenithLab {
         setTimeout(() => {
             this.init3DTopology();
             this.initCharts();
-            this.startReasoningStream();
+            this.clearStream();
             this.loadData();
         }, 100);
 
@@ -49,6 +49,11 @@ export class ZenithLab {
     /** Dispose GPU/animation resources — called by router when navigating away. */
     dispose() {
         this.isActive = false;
+        // Cancel the reasoning stream timeout so it doesn't fire after navigation
+        if (this._streamTimeout) {
+            clearTimeout(this._streamTimeout);
+            this._streamTimeout = null;
+        }
         if (this.renderer) {
             this.renderer.dispose();
             this.renderer = null;
@@ -212,28 +217,33 @@ export class ZenithLab {
         });
     }
 
-    startReasoningStream() {
+    clearStream() {
         if (!this.reasoningFeed) return;
-        const signals = [
-            'Analyzing behavioral patterns...', 'Checking Milvus vector clusters...',
-            'Synchronizing goal state...', 'Calculating success probability...',
-            'Optimizing subtask decomposition...', 'Generating strategic roadmap...',
-            'Mimicking human UI interaction patterns...', 'Reinforcing neural belief system...',
-            'Validating expert knowledge base...', 'Reclaiming strategic cognitive cycles...'
-        ];
-        let index = 0;
         this.reasoningFeed.innerHTML = '';
-        const stream = () => {
-            if (!this.isActive) return;
-            const entry = document.createElement('div');
-            entry.style.marginBottom = '0.5rem';
-            entry.innerHTML = `<span style="color:hsla(var(--primary),1)">>></span> ${signals[index % signals.length]}`;
-            this.reasoningFeed.appendChild(entry);
-            this.reasoningFeed.scrollTop = this.reasoningFeed.scrollHeight;
-            if (this.reasoningFeed.childNodes.length > 20) this.reasoningFeed.removeChild(this.reasoningFeed.firstChild);
-            index++;
-            setTimeout(stream, 1500 + Math.random() * 2000);
-        };
-        stream();
+        if (this._streamTimeout) {
+            clearTimeout(this._streamTimeout);
+            this._streamTimeout = null;
+        }
+    }
+
+    appendStreamLog(text, isTask = false) {
+        if (!this.reasoningFeed || !this.isActive) return;
+        
+        const entry = document.createElement('div');
+        entry.style.marginBottom = '0.5rem';
+        
+        if (isTask) {
+            entry.innerHTML = `<span style="color:#bf9eff">✦</span> <span style="color:#ffffff">${text}</span>`;
+        } else {
+            entry.innerHTML = `<span style="color:hsla(var(--primary),1)">>></span> <span style="color:var(--text-dim)">${text}</span>`;
+        }
+        
+        this.reasoningFeed.appendChild(entry);
+        this.reasoningFeed.scrollTop = this.reasoningFeed.scrollHeight;
+        
+        // Keep UI clean, remove oldest if more than 30 lines
+        if (this.reasoningFeed.childNodes.length > 30) {
+            this.reasoningFeed.removeChild(this.reasoningFeed.firstChild);
+        }
     }
 }

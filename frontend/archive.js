@@ -55,12 +55,9 @@ export class NeuralArchive {
     }
 
     async loadData() {
-        const input = document.getElementById('backend-url');
-        const backendUrl = (input ? input.value : 'http://localhost:5000').replace(/\/$/, '');
         try {
-            const res = await fetch(`${backendUrl}/analytics/knowledge`);
-            if (!res.ok) throw new Error('Knowledge endpoint offline');
-            this.data = await res.json();
+            const data = await window.app.api.get('/analytics/knowledge');
+            this.data = data;
         } catch (err) {
             console.warn('Archive — backend offline, using demo data:', err.message);
             this.data = {
@@ -112,6 +109,21 @@ export class NeuralArchive {
         this.canvasContainer.appendChild(this.renderer.domElement);
         this.camera.position.z = 35;
 
+        // Add OrbitControls for interactivity
+        const controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Handle Window Resizing
+        window.addEventListener('resize', () => {
+            if (!this.isActive || !this.canvasContainer) return;
+            const newW = this.canvasContainer.clientWidth;
+            const newH = this.canvasContainer.clientHeight;
+            this.camera.aspect = newW / newH;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(newW, newH);
+        });
+
         this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
         const pl = new THREE.PointLight(0xffffff, 1);
         pl.position.set(10, 10, 10);
@@ -157,6 +169,7 @@ export class NeuralArchive {
                 p[3] = l.target.position.x; p[4] = l.target.position.y; p[5] = l.target.position.z;
                 l.line.geometry.attributes.position.needsUpdate = true;
             });
+            controls.update(); // Required for damping
             this.renderer.render(this.scene, this.camera);
         };
         animate();

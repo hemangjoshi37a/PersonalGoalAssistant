@@ -21,8 +21,12 @@
     <!-- Core Dependencies -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="apiClient.js"></script>
+    <script src="main.js"></script>
+    <script src="lab.js"></script>
 
 </head>
 <body>
@@ -132,91 +136,50 @@
                 </div>
             </section>
 
-            <section id="modules" style="padding: 100px 10%; background: rgba(255,255,255,0.02);">
-                <div class="section-header reveal" style="text-align: center;">
-                    <h2>Lifestyle Engine Core</h2>
+            <section id="app-dashboard" style="padding: 100px 5%; max-width: 1400px; margin: 0 auto;">
+                <div class="section-header reveal" style="text-align: center; margin-bottom: 4rem;">
+                    <h2>System Modules</h2>
+                    <p style="color:var(--text-dim);">Access your personalized AI architecture.</p>
                 </div>
-                <div class="features stagger-reveal" style="padding: 0;">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i data-lucide="brain"></i></div>
-                        <h3>Life Planner</h3>
-                        <p>Derives optimal paths for your unique personal objectives and lifestyle.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i data-lucide="mouse-pointer-2"></i></div>
-                        <h3>Interaction Engine</h3>
-                        <p>Reinforcement learning models that handle real-time UI interaction and peripheral control.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i data-lucide="database"></i></div>
-                        <h3>Habit Vault</h3>
-                        <p>Safe Milvus vector storage for your personal behavioral patterns and progress.</p>
-                    </div>
+                
+                <div class="dashboard-grid stagger-reveal">
+                    <a href="#/lab" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="test-tube-2"></i></div>
+                        <div class="card-content">
+                            <h3>Zenith Growth Lab</h3>
+                            <p>Watch the AI synthesize your missions in real-time streams.</p>
+                        </div>
+                    </a>
+                    <a href="#/forge" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="hammer"></i></div>
+                        <div class="card-content">
+                            <h3>Quantum Forge</h3>
+                            <p>Track your daily habits and build unbreakable progress streaks.</p>
+                        </div>
+                    </a>
+                    <a href="#/aura" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="hexagon"></i></div>
+                        <div class="card-content">
+                            <h3>Aura Nexus</h3>
+                            <p>Visualize your shifting personality as a 3D geometric entity.</p>
+                        </div>
+                    </a>
+                    <a href="#/archive" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="network"></i></div>
+                        <div class="card-content">
+                            <h3>Neural Archive</h3>
+                            <p>Explore the Expert Knowledge Base via an interactive 3D topology.</p>
+                        </div>
+                    </a>
+                    <a href="#/chronos" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="clock"></i></div>
+                        <div class="card-content">
+                            <h3>Chronos Engine</h3>
+                            <p>Automatically synchronize and visualize your daily temporal schedule.</p>
+                        </div>
+                    </a>
                 </div>
             </section>
-
-            <section id="milvus" class="milvus-section reveal">
-                <div class="milvus-content">
-                    <h2 style="margin: 1.5rem 0;">A Personal Brain for Your Goals</h2>
-                    <p style="color: var(--text-dim); margin-bottom: 2rem;">The Assistant doesn't just plan; it remembers. Your previous successes and preferences are vectorized and stored, creating a personalized blueprint for everything you want to achieve.</p>
-                    <ul style="list-style: none; color: white;">
-                        <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Intelligent preference retrieval</li>
-                        <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Cross-device habit syncing</li>
-                        <li style="margin-bottom: 1rem;"><i data-lucide="check" style="width: 16px; color: hsla(var(--accent), 1);"></i> Secure, private personal data memory</li>
-                    </ul>
-                </div>
-                <div class="milvus-visual">
-                    <div class="neural-node" style="top: 20%; left: 30%;"></div>
-                    <div class="neural-node" style="top: 60%; left: 10%; animation-delay: 0.5s;"></div>
-                    <div class="neural-node" style="top: 40%; left: 80%; animation-delay: 1s;"></div>
-                    <div class="neural-node" style="top: 80%; left: 50%; animation-delay: 1.5s;"></div>
-                    <div class="neural-node" style="top: 10%; left: 70%; animation-delay: 0.2s;"></div>
-                    <svg style="position: absolute; width: 100%; height: 100%; opacity: 0.2;">
-                        <line x1="30%" y1="20%" x2="70%" y2="10%" stroke="white" stroke-width="1" />
-                        <line x1="30%" y1="20%" x2="10%" y2="60%" stroke="white" stroke-width="1" />
-                        <line x1="70%" y1="10%" x2="80%" y2="40%" stroke="white" stroke-width="1" />
-                        <line x1="10%" y1="60%" x2="50%" y2="80%" stroke="white" stroke-width="1" />
-                        <line x1="80%" y1="40%" x2="50%" y2="80%" stroke="white" stroke-width="1" />
-                    </svg>
-                </div>
-            </section>
-
-            <section id="use-cases" style="padding: 100px 10%;">
-                <div class="section-header reveal" style="text-align: center;">
-                    <h2>Personal Missions</h2>
-                    <p>From micro-habits to life-changing transformations.</p>
-                </div>
-                <div class="use-cases-grid stagger-reveal">
-                    <div class="use-case-card">
-                        <div class="use-case-img"><i data-lucide="heart" style="width: 40px; height: 40px;"></i></div>
-                        <div class="use-case-content">
-                            <h4>Health & Wellness</h4>
-                            <p>Automate your fitness journey, from meal prep scheduling to tracking your morning routines.</p>
-                        </div>
-                    </div>
-                    <div class="use-case-card">
-                        <div class="use-case-img"><i data-lucide="book-open" style="width: 40px; height: 40px;"></i></div>
-                        <div class="use-case-content">
-                            <h4>Skill Acquisition</h4>
-                            <p>Master new languages or instruments with an agent that finds resources and builds your curriculum.</p>
-                        </div>
-                    </div>
-                    <div class="use-case-card">
-                        <div class="use-case-img"><i data-lucide="clapperboard" style="width: 40px; height: 40px;"></i></div>
-                        <div class="use-case-content">
-                            <h4>Lifestyle Logistics</h4>
-                            <p>Offload the "admin of life"—travel planning, appointment booking, and gift reminders.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="mission-cta reveal" style="padding: 100px 10%; text-align: center; background: rgba(255,255,255,0.02);">
-                <a href="#/console" class="btn btn-primary btn-large">
-                    <span>GET STARTED</span>
-                    <i data-lucide="arrow-right"></i>
-                </a>
-            </div>
         </section> <!-- End page-home -->
 
         <!-- Mission Console Page -->
@@ -282,15 +245,15 @@
                                         <label>Intensity</label>
                                         <div class="intensity-options">
                                             <label class="intensity-option">
-                                                <input type="radio" name="intensity" value="low" checked>
+                                                <input type="radio" name="intensity" value="blitz" checked>
                                                 <span>Focus</span>
                                             </label>
                                             <label class="intensity-option">
-                                                <input type="radio" name="intensity" value="medium">
+                                                <input type="radio" name="intensity" value="balanced">
                                                 <span>Momentum</span>
                                             </label>
                                             <label class="intensity-option">
-                                                <input type="radio" name="intensity" value="high">
+                                                <input type="radio" name="intensity" value="mastery">
                                                 <span>Overdrive</span>
                                             </label>
                                         </div>
@@ -309,6 +272,10 @@
                                             <label class="intensity-option">
                                                 <input type="radio" name="persona" value="zen">
                                                 <span>Zen</span>
+                                            </label>
+                                            <label class="intensity-option">
+                                                <input type="radio" name="persona" value="optimizer">
+                                                <span>Optimizer</span>
                                             </label>
                                         </div>
                                     </div>
@@ -354,6 +321,10 @@
                             <button id="copy-report-btn" class="btn-icon"><i data-lucide="copy" style="width: 16px;"></i></button>
                             <button id="download-report-btn" class="btn-icon"><i data-lucide="download" style="width: 16px;"></i></button>
                         </div>
+                    </div>
+                    <!-- Mission Progress Bar -->
+                    <div style="margin: 1rem 0; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                        <div id="progress-bar-fill" style="height: 100%; width: 0%; background: linear-gradient(to right, hsla(var(--primary),1), hsla(var(--accent),1)); border-radius: 10px; transition: width 0.4s ease;"></div>
                     </div>
                     <div id="report-content" class="document-view"></div>
                 </div>

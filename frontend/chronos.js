@@ -37,15 +37,24 @@ export class ChronosEngine {
     async open() {
         this.isActive = true;
         setTimeout(async () => {
-            await this.loadData();
-            this.init3DVortex();
+            await this.sync();
             lucide.createIcons();
+            
+            // Auto-refresh schedule every 60 seconds to keep timeline blocks in sync
+            this.syncInterval = setInterval(() => {
+                if (this.isActive) this.sync();
+            }, 60000);
+            
         }, 100);
     }
 
     /** Dispose GPU/animation resources — called by router when navigating away. */
     dispose() {
         this.isActive = false;
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+        }
         if (this.renderer) {
             this.renderer.dispose();
             this.renderer = null;
@@ -59,6 +68,12 @@ export class ChronosEngine {
     async sync() {
         if (!this.isActive) return;
         if (this.scheduleList) this.scheduleList.innerHTML = `<div style="color:var(--text-dim);font-size:0.85rem;padding:1rem;">Syncing schedule...</div>`;
+        // Dispose old renderer to prevent GPU memory leak before reinitialising
+        if (this.renderer) {
+            this.renderer.dispose();
+            this.renderer = null;
+        }
+        if (this.canvasContainer) this.canvasContainer.innerHTML = '';
         await this.loadData();
         this.init3DVortex();
     }
@@ -132,15 +147,22 @@ export class ChronosEngine {
         animate();
     }
 
+    toggleComplete(index) {
+        if (!this.schedule[index]) return;
+        const cur = this.schedule[index].status;
+        this.schedule[index].status = cur === 'completed' ? 'pending' : 'completed';
+        this.renderSchedule();
+    }
+
     renderSchedule() {
         if (!this.scheduleList) return;
         const statusColor = { completed: '#3fb950', active: '#ff6600', pending: 'var(--text-dim)' };
         const statusIcon  = { completed: 'check-circle', active: 'play-circle', pending: 'circle' };
-        this.scheduleList.innerHTML = this.schedule.map(s => `
-            <div class="chronos-item ${s.status}">
+        this.scheduleList.innerHTML = this.schedule.map((s, i) => `
+            <div class="chronos-item ${s.status}" style="cursor:pointer;" onclick="window.chronosEngine.toggleComplete(${i})" title="Click to toggle complete">
                 <div class="time" style="color:${statusColor[s.status] || 'var(--text-dim)'}">${s.time}</div>
                 <div class="details">
-                    <h6 style="font-weight:700;font-size:0.9rem;color:white;">${s.task}</h6>
+                    <h6 style="font-weight:700;font-size:0.9rem;color:white;${s.status === 'completed' ? 'text-decoration:line-through;opacity:0.6;' : ''}">${s.task}</h6>
                     <div class="intensity-bar">
                         <div style="width:${s.intensity * 100}%;background:${statusColor[s.status] || '#bf9eff'};"></div>
                     </div>
@@ -149,5 +171,6 @@ export class ChronosEngine {
                     <i data-lucide="${statusIcon[s.status] || 'circle'}" style="width:18px;height:18px;"></i>
                 </div>
             </div>`).join('');
+        lucide.createIcons();
     }
 }

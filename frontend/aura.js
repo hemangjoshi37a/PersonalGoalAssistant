@@ -68,6 +68,16 @@ export class AuraNexus {
         this.canvasContainer.appendChild(this.renderer.domElement);
         this.camera.position.z = 5;
 
+        // Handle Window Resizing
+        window.addEventListener('resize', () => {
+            if (!this.isActive || !this.canvasContainer) return;
+            const newW = this.canvasContainer.clientWidth;
+            const newH = this.canvasContainer.clientHeight;
+            this.camera.aspect = newW / newH;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(newW, newH);
+        });
+
         this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
         const pl = new THREE.PointLight(0xffffff, 1);
         pl.position.set(5, 5, 5);
@@ -82,6 +92,10 @@ export class AuraNexus {
         this.auraMesh = new THREE.Mesh(geometry, material);
         this.scene.add(this.auraMesh);
 
+        // Snapshot original vertex positions BEFORE animation starts
+        // so the noise each frame is applied to the rest state, not accumulated
+        const originalPos = geometry.getAttribute('position').array.slice();
+
         const animate = () => {
             if (!this.isActive) return;
             requestAnimationFrame(animate);
@@ -91,7 +105,8 @@ export class AuraNexus {
             const pos = this.auraMesh.geometry.getAttribute('position');
             const v = new THREE.Vector3();
             for (let i = 0; i < pos.count; i++) {
-                v.fromBufferAttribute(pos, i);
+                // Restore original position first, then apply noise on top
+                v.set(originalPos[i * 3], originalPos[i * 3 + 1], originalPos[i * 3 + 2]);
                 const noise = Math.sin(v.x * 2 + time) * 0.05;
                 v.normalize().multiplyScalar(2 + noise);
                 pos.setXYZ(i, v.x, v.y, v.z);
@@ -103,12 +118,8 @@ export class AuraNexus {
     }
 
     async loadAuraData() {
-        const input = document.getElementById('backend-url');
-        const backendUrl = (input ? input.value : 'http://localhost:5000').replace(/\/$/, '');
         try {
-            const res = await fetch(`${backendUrl}/analytics/aura`);
-            if (!res.ok) throw new Error('Aura endpoint offline');
-            const data = await res.json();
+            const data = await window.app.api.get('/analytics/aura');
             if (this.auraTypeEl) this.auraTypeEl.textContent = data.type;
             if (this.auraInfoEl) this.auraInfoEl.textContent = data.description;
             this.auraColor = data.color;

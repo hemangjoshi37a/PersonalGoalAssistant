@@ -4,8 +4,9 @@ Database models for the Personal Goal Assistant.
 Defines schema for Missions, Subtasks, Habits, and Habit Logs using SQLAlchemy.
 """
 
+import math
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 db = SQLAlchemy()
@@ -34,7 +35,7 @@ class Mission(db.Model):
             'intensity': self.intensity,
             'timestamp': self.timestamp.isoformat(),
             'is_completed': self.is_completed,
-            'subtasks': [s.to_dict() for s in self.subtasks]
+            'subtasks': [s.to_dict() for s in sorted(self.subtasks, key=lambda s: s.order)]
         }
 
 class Subtask(db.Model):
@@ -66,17 +67,44 @@ class Habit(db.Model):
     __tablename__ = 'habits'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
-    cue = db.Column(db.String(200)) # The behavioral trigger
-    reward = db.Column(db.String(200)) # The craving satisfaction
+    cue = db.Column(db.String(200))          # The behavioral trigger
+    reward = db.Column(db.String(200))        # The craving satisfaction
     frequency = db.Column(db.String(50), default='daily')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     logs = db.relationship('HabitLog', backref='habit', lazy=True, cascade="all, delete-orphan")
 
+    @property
+    def streak(self) -> int:
+        """Calculates the current consecutive-day streak."""
+        completed_dates = sorted(
+            set(l.timestamp.date() for l in self.logs if l.status == 'completed'),
+            reverse=True
+        )
+        if not completed_dates:
+            return 0
+
+        today = datetime.utcnow().date()
+        streak = 0
+        expected = today
+
+        for d in completed_dates:
+            if d == expected:
+                streak += 1
+                expected -= timedelta(days=1)
+            elif d == today - timedelta(days=1) and streak == 0:
+                streak += 1
+                expected = d - timedelta(days=1)
+            else:
+                break
+
+        return streak
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Serializes the Habit object to a dictionary.
         """
+        completed_logs = [l for l in self.logs if l.status == 'completed']
         return {
             'id': self.id,
             'name': self.name,
@@ -84,6 +112,8 @@ class Habit(db.Model):
             'reward': self.reward,
             'frequency': self.frequency,
             'created_at': self.created_at.isoformat(),
+            'streak': self.streak,
+            'totalLogs': len(completed_logs),
             'logs': [l.to_dict() for l in self.logs]
         }
 
@@ -95,7 +125,7 @@ class HabitLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(50), default='completed') # e.g., 'completed', 'missed'
+    status = db.Column(db.String(50), default='completed')  # 'completed' | 'missed'
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -104,9 +134,11 @@ class HabitLog(db.Model):
         return {
             'id': self.id,
             'habit_id': self.habit_id,
+            'habit_name': self.habit.name if self.habit else None,
             'timestamp': self.timestamp.isoformat(),
             'status': self.status
         }
+
 class UserStats(db.Model):
     """
     Tracks the user's gamified progress: XP, Level, and Rank.
@@ -117,14 +149,13 @@ class UserStats(db.Model):
     
     @property
     def level(self) -> int:
-        # Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 400 XP... (Level = floor(sqrt(xp/100)) + 1)
-        import math
+        """Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 400 XP... (Level = floor(sqrt(xp/100)) + 1)"""
         return math.floor(math.sqrt(self.xp / 100)) + 1 if self.xp > 0 else 1
 
     @property
     def rank(self) -> str:
         lvl = self.level
-        if lvl < 5: return "Novice Explorer"
+        if lvl < 5:  return "Novice Explorer"
         if lvl < 15: return "Strategic Architect"
         if lvl < 30: return "Mission Commander"
         if lvl < 50: return "Silicon Overlord"

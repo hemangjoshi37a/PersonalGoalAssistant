@@ -46,54 +46,85 @@ export class QuantumForge {
     }
 
     async loadData() {
-        const backendUrl = this.getBackendUrl();
         try {
-            const habitRes = await fetch(`${backendUrl}/forge/habits`);
-            if (!habitRes.ok) throw new Error('Habits offline');
-            this.habits = await habitRes.json();
+            const data = await window.app.api.get('/forge/habits');
+            this.habits = data;
             this.renderHabits();
             this.renderConstellation();
-
-            const predictRes = await fetch(`${backendUrl}/forge/predict`);
-            if (!predictRes.ok) throw new Error('Predictions offline');
-            this.renderPredictions(await predictRes.json());
-
         } catch (err) {
-            console.warn('Forge — backend offline:', err.message);
-            this.habits = [];
-            this.renderHabits();
-            this.renderConstellation();
-            if (this.predictionContainer) {
-                this.predictionContainer.innerHTML = `<div style="color:var(--text-dim);font-size:0.85rem;">Start the backend server to track and predict habits.</div>`;
-            }
+            console.error('Failed to load habits:', err);
+            this.habitList.innerHTML = `<div style="color:#f85149;font-size:0.85rem;padding:1rem;">Error loading data.</div>`;
+        }
+
+        try {
+            const data = await window.app.api.get('/forge/predict');
+            this.renderPredictions(data);
+        } catch (err) {
+            console.error('Failed to load predictions:', err);
         }
     }
 
     async createHabit() {
-        const backendUrl = this.getBackendUrl();
         const name = document.getElementById('habit-name')?.value.trim();
         const cue = document.getElementById('habit-cue')?.value.trim();
         if (!name) return;
         try {
-            const res = await fetch(`${backendUrl}/forge/habits`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, cue })
-            });
-            if (res.ok) { this.form.reset(); await this.loadData(); }
-        } catch (err) { console.error('Failed to engrave habit:', err); }
+            await window.app.api.post('/forge/habits', { name, cue });
+            this.form.reset();
+            await this.loadData();
+        } catch (err) {
+            console.error('Failed to create habit:', err);
+            alert(err.message || 'Failed to create habit');
+        }
     }
 
     async logHabit(habitId) {
+        // Optimistic feedback: flash the button
+        const btn = document.querySelector(`[data-log-btn="${habitId}"]`);
+        if (btn) { btn.textContent = '...'; btn.disabled = true; }
+        try {
+            await window.app.api.post('/forge/log', { habit_id: habitId, status: 'completed' });
+            await this.loadData();
+        } catch (err) { console.error('Failed to log habit:', err); }
+        if (btn) { btn.textContent = 'LOG ✓'; btn.disabled = false; }
+    }
+
+    async deleteHabit(habitId) {
+        if (!confirm('Delete this habit and all its logs?')) return;
         const backendUrl = this.getBackendUrl();
         try {
-            const res = await fetch(`${backendUrl}/forge/log`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ habit_id: habitId, status: 'completed' })
-            });
-            if (res.ok) await this.loadData();
-        } catch (err) { console.error('Failed to log habit:', err); }
+            await window.app.api.delete(`/forge/habits/${habitId}`);
+            await this.loadData();
+        } catch (err) { console.error('Failed to delete habit:', err); }
+    }
+
+    /**
+     * Calculates the current consecutive-day streak from an array of log objects.
+     * A streak counts backwards from today; any gap of >1 day breaks it.
+     * @param {Array} logs - Array of log objects with a `timestamp` field.
+     * @returns {number}
+     */
+    calcStreak(logs) {
+        if (!logs || logs.length === 0) return 0;
+        // Collect unique calendar dates (YYYY-MM-DD) that have a log
+        const dateSet = new Set(
+            logs.map(l => new Date(l.timestamp).toISOString().slice(0, 10))
+        );
+        const dates = Array.from(dateSet).sort().reverse(); // newest first
+        let streak = 0;
+        let cursor = new Date();
+        cursor.setHours(0, 0, 0, 0);
+        for (const dateStr of dates) {
+            const d = new Date(dateStr);
+            const diff = Math.round((cursor - d) / 86400000);
+            if (diff <= 1) {
+                streak++;
+                cursor = d;
+            } else {
+                break; // gap found — streak is broken
+            }
+        }
+        return streak;
     }
 
     renderHabits() {
@@ -102,17 +133,26 @@ export class QuantumForge {
             this.habitList.innerHTML = `<div style="color:var(--text-dim);font-size:0.85rem;padding:1rem 0;">No habits forged yet. Create one below.</div>`;
             return;
         }
-        this.habitList.innerHTML = this.habits.map(h => `
+        this.habitList.innerHTML = this.habits.map(h => {
+            const streak = this.calcStreak(h.logs);
+            return `
             <div class="habit-item">
                 <div style="flex:1">
                     <div style="font-weight:700;font-size:0.9rem;color:white;">${h.name}</div>
-                    <div style="font-size:0.75rem;color:var(--text-dim);">Cue: ${h.cue || '—'} &bull; Streak: ${h.logs ? h.logs.length : 0} days</div>
+                    <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;">Cue: ${h.cue || '—'} &bull; <span style="color:#bf9eff;font-weight:700;">🔥 ${streak} day streak</span></div>
                 </div>
-                <button onclick="window.quantumForge.logHabit(${h.id})"
-                    style="padding:0.4rem 0.9rem;background:hsla(var(--accent),0.15);border:1px solid hsla(var(--accent),0.4);color:hsla(var(--accent),1);border-radius:8px;cursor:pointer;font-size:0.75rem;font-weight:700;transition:all 0.2s;">
-                    LOG ✓
-                </button>
-            </div>`).join('');
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <button data-log-btn="${h.id}" onclick="window.quantumForge.logHabit(${h.id})"
+                        style="padding:0.4rem 0.9rem;background:hsla(var(--accent),0.15);border:1px solid hsla(var(--accent),0.4);color:hsla(var(--accent),1);border-radius:8px;cursor:pointer;font-size:0.75rem;font-weight:700;transition:all 0.2s;">
+                        LOG ✓
+                    </button>
+                    <button onclick="window.quantumForge.deleteHabit(${h.id})"
+                        style="padding:0.4rem 0.6rem;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:#f85149;border-radius:8px;cursor:pointer;font-size:0.75rem;transition:all 0.2s;" title="Delete habit">
+                        ✕
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     renderPredictions(data) {

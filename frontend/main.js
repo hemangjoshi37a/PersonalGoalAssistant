@@ -17,6 +17,8 @@ import { ChronosEngine } from './chronos.js';
  */
 class AppController {
     constructor() {
+        this.api = new ApiClient('http://localhost:5000');
+        
         /** @type {Object} UI Selectors */
         this.dom = {
             form: document.getElementById('rl-agent-form'),
@@ -41,6 +43,7 @@ class AppController {
             userLevel: document.getElementById('user-level'),
             userXp: document.getElementById('user-xp'),
             xpBarFill: document.getElementById('xp-bar-fill'),
+            progressBarFill: document.getElementById('progress-bar-fill'),
             mainNav: document.getElementById('main-nav'),
             mobileMenuBtn: document.getElementById('mobile-menu-btn'),
             sideDrawer: document.getElementById('side-drawer'),
@@ -98,10 +101,16 @@ class AppController {
      * Attaches global event listeners to DOM elements.
      */
     setupEventListeners() {
-        // Settings Toggle
+        // Settings Toggle — use a CSS class flag to avoid empty-string false positives
         this.dom.settingsTrigger.addEventListener('click', () => {
-            const isOpen = this.dom.settingsPanel.style.maxHeight !== '0px' && this.dom.settingsPanel.style.maxHeight !== '';
-            this.dom.settingsPanel.style.maxHeight = isOpen ? '0px' : '200px';
+            const isOpen = this.dom.settingsPanel.classList.contains('open');
+            if (isOpen) {
+                this.dom.settingsPanel.classList.remove('open');
+                this.dom.settingsPanel.style.maxHeight = '0px';
+            } else {
+                this.dom.settingsPanel.classList.add('open');
+                this.dom.settingsPanel.style.maxHeight = '200px';
+            }
         });
 
         // Form Submission
@@ -281,30 +290,62 @@ class AppController {
     async handleMissionSubmission(e) {
         e.preventDefault();
         
-        const goal = this.dom.goalInput.value;
-        const intensity = document.querySelector('input[name="intensity"]:checked').value;
-        const persona = document.querySelector('input[name="persona"]:checked').value;
-        let backendUrl = this.dom.backendUrlInput.value;
-        if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
+        const goal = this.dom.goalInput.value.trim();
+        if (!goal) return;
 
-        this.setUIState('loading');
+        // Collect parameters
+        let intensity = 'balanced';
+        let persona = 'strategist';
+        
+        const intensityInput = document.querySelector('input[name="intensity"]:checked');
+        if (intensityInput) intensity = intensityInput.value;
+        
+        const personaInput = document.querySelector('input[name="persona"]:checked');
+        if (personaInput) persona = personaInput.value;
+
+        // Transition UI to Active State
+        this.transitionToActiveMission();
 
         try {
-            const response = await fetch(`${backendUrl}/run`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ goal, intensity, persona }),
+            // Initiate Reasoning Stream UI
+            if (window.zenithLab) {
+                window.zenithLab.clearStream();
+            }
+
+            this.updateProgress(10, 'Establishing Neural Link...');
+            
+            await this.api.stream('/run/stream', { goal, intensity, persona }, (chunk) => {
+                if (window.zenithLab) {
+                    if (chunk.subtask) {
+                        window.zenithLab.appendStreamLog(chunk.subtask, true);
+                    }
+                    if (chunk.status) {
+                        window.zenithLab.appendStreamLog(chunk.status, false);
+                        // Update the progress bar based on status keywords
+                        if (chunk.status.includes('Generating')) this.updateProgress(40, chunk.status);
+                        else if (chunk.status.includes('crystallized')) this.updateProgress(100, chunk.status);
+                        else this.updateProgress(this.dom.progressBar.style.width, chunk.status); // Keep width, update text
+                    }
+                    if (chunk.final_subtasks) {
+                        this.currentMissionData = { mission: { goal }, subtasks: chunk.final_subtasks };
+                    }
+                }
             });
 
-            if (!response.ok) throw new Error(`Network status error: ${response.status}`);
+            // The stream is fully complete
+            setTimeout(() => {
+                this.renderFinalReport();
+            }, 1000);
 
-            const data = await response.json();
-            this.handleMissionSuccess(data, goal, backendUrl);
+            // Reload history to show new mission
+            await this.loadMissions();
 
         } catch (error) {
-            this.handleMissionFailure(error);
-        } finally {
-            this.setUIState('idle');
+            console.error("Neural Link Failure:", error);
+            this.updateProgress(0, `Mission Aborted: ${error.message}`);
+            if (window.zenithLab) {
+                window.zenithLab.appendStreamLog(`CRITICAL ERROR: ${error.message}`, false);
+            }
         }
     }
 
@@ -387,7 +428,41 @@ class AppController {
             this.dom.finalCard.style.display = 'block';
             this.dom.finalCard.style.animation = 'fadeIn 0.5s ease-out';
             this.dom.resultContainer.textContent = data.result || 'Mission Objectives Materialized Successfully.';
+            this.appendNewMissionButton();
         }, 500);
+    }
+
+    /**
+     * Injects a "New Mission" reset button into the final card after a mission completes.
+     */
+    appendNewMissionButton() {
+        if (document.getElementById('new-mission-btn')) return; // Already exists
+        const btn = document.createElement('button');
+        btn.id = 'new-mission-btn';
+        btn.className = 'btn btn-secondary';
+        btn.style.cssText = 'margin-top: 1.5rem; width: 100%; justify-content: center;';
+        btn.innerHTML = '<i data-lucide="refresh-cw" style="width:16px;"></i> &nbsp; NEW MISSION';
+        btn.addEventListener('click', () => this.resetToNewMission());
+        this.dom.finalCard.appendChild(btn);
+        lucide.createIcons();
+    }
+
+    /**
+     * Resets the console UI for a fresh mission input.
+     */
+    resetToNewMission() {
+        this.dom.goalInput.value = '';
+        this.dom.output.innerHTML = '';
+        this.dom.subtasksContainer.innerHTML = '';
+        this.dom.reportContent.innerHTML = '';
+        this.dom.reportSection.style.display = 'none';
+        this.dom.processingView.style.display = 'none';
+        this.dom.finalCard.style.display = 'none';
+        this.dom.statusBadge.style.display = 'none';
+        const existingBtn = document.getElementById('new-mission-btn');
+        if (existingBtn) existingBtn.remove();
+        this.dom.goalInput.focus();
+        this.dom.goalInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     /**
@@ -524,10 +599,12 @@ class AppController {
         const completedItems = document.querySelectorAll('.task-item.completed');
         const percentage = (completedItems.length / items.length) * 100;
         
-        this.dom.progressBarFill.style.width = `${percentage}%`;
-        this.dom.progressBarFill.style.background = percentage === 100 
-            ? 'linear-gradient(to right, #3fb950, #2ea043)' 
-            : 'linear-gradient(to right, hsla(var(--primary), 1), hsla(var(--accent), 1))';
+        if (this.dom.progressBarFill) {
+            this.dom.progressBarFill.style.width = `${percentage}%`;
+            this.dom.progressBarFill.style.background = percentage === 100 
+                ? 'linear-gradient(to right, #3fb950, #2ea043)' 
+                : 'linear-gradient(to right, hsla(var(--primary), 1), hsla(var(--accent), 1))';
+        }
     }
 
     /**
