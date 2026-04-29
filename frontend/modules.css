@@ -232,6 +232,13 @@
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    min-height: 0; /* Prevents flex children from expanding uncontrollably */
+}
+
+#growth-chart {
+    max-height: 100% !important;
+    max-width: 100% !important;
 }
 
 .lab-card:hover {
@@ -573,4 +580,436 @@
     .archive-grid, .chronos-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ─────────────────────────────────────
+   MOMENTUM MATRIX
+───────────────────────────────────── */
+.momentum-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.momentum-stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.momentum-stat {
+    background: rgba(0, 210, 255, 0.05);
+    border: 1px solid rgba(0, 210, 255, 0.15);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.momentum-stat:hover {
+    background: rgba(0, 210, 255, 0.1);
+    border-color: rgba(0, 210, 255, 0.3);
+    transform: translateY(-4px);
+}
+
+.momentum-stat .m-val {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #00d2ff;
+    line-height: 1;
+}
+
+.momentum-stat .m-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+}
+
+.momentum-heatmap-card {
+    width: 100%;
+}
+
+.momentum-tooltip {
+    display: none;
+    position: fixed;
+    background: rgba(10, 15, 30, 0.95);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', monospace;
+    color: white;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .momentum-stats-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─────────────────────────────────────
+   ORACLE FEED
+───────────────────────────────────── */
+.oracle-layout {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.oracle-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.oracle-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsla(var(--primary), 1);
+    box-shadow: 0 0 8px hsla(var(--primary), 0.8);
+    animation: oraclePulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes oraclePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.oracle-status-text {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.oracle-card {
+    min-height: 300px;
+}
+
+.oracle-brief-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.oracle-text .oracle-date {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: hsla(var(--primary), 1);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.oracle-text .oracle-section-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: hsla(var(--accent), 1);
+    margin: 1.5rem 0 0.75rem;
+}
+
+.oracle-text .oracle-action-item {
+    padding: 0.5rem 0;
+    padding-left: 1rem;
+    border-left: 2px solid hsla(var(--primary), 0.4);
+    margin: 0.5rem 0;
+    color: white;
+}
+
+/* ─────────────────────────────────────
+   GAUNTLET PROTOCOL
+───────────────────────────────────── */
+.gauntlet-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    align-items: start;
+}
+
+.gauntlet-left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.gauntlet-right-panel {
+    min-height: 500px;
+}
+
+.gauntlet-forge-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+
+.gauntlet-duration-picker {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.gd-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+.gd-option input[type="radio"] {
+    display: none;
+}
+
+.gd-option span {
+    display: block;
+    text-align: center;
+    padding: 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(191, 158, 255, 0.2);
+    background: rgba(191, 158, 255, 0.04);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    transition: all 0.2s ease;
+}
+
+.gd-option input[type="radio"]:checked + span {
+    border-color: rgba(191, 158, 255, 0.6);
+    background: rgba(191, 158, 255, 0.12);
+    color: white;
+    box-shadow: 0 0 12px rgba(191, 158, 255, 0.2);
+}
+
+.gd-option:hover span {
+    border-color: rgba(191, 158, 255, 0.4);
+    color: white;
+}
+
+/* Gauntlet List Items */
+.gauntlet-list-item {
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.gauntlet-list-item:hover,
+.gauntlet-list-item.active {
+    background: rgba(191, 158, 255, 0.08);
+    border-color: rgba(191, 158, 255, 0.3);
+}
+
+.gauntlet-list-item .gli-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gauntlet-list-item .gli-meta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+}
+
+.gauntlet-list-item .gli-bar {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.gauntlet-list-item .gli-bar div {
+    height: 100%;
+    background: linear-gradient(to right, #bf9eff, #7b61ff);
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Gauntlet Timeline Panel */
+.gauntlet-timeline-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 2rem;
+    min-height: 500px;
+}
+
+.gauntlet-header-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.gauntlet-title-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.35rem;
+}
+
+.gauntlet-meta-text {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.gauntlet-ring-pct {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #bf9eff;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.gauntlet-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.gauntlet-progress-bar div {
+    height: 100%;
+    background: linear-gradient(to right, #bf9eff, #7b61ff);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gauntlet-days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scroll-behavior: smooth;
+}
+
+.gauntlet-days-grid::-webkit-scrollbar {
+    width: 4px;
+}
+.gauntlet-days-grid::-webkit-scrollbar-thumb {
+    background: rgba(191, 158, 255, 0.2);
+    border-radius: 10px;
+}
+
+.gauntlet-day-card {
+    background: rgba(191, 158, 255, 0.04);
+    border: 1px solid rgba(191, 158, 255, 0.12);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.gauntlet-day-card:hover {
+    background: rgba(191, 158, 255, 0.08);
+    border-color: rgba(191, 158, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+.gauntlet-day-card.done {
+    background: rgba(63, 185, 80, 0.06);
+    border-color: rgba(63, 185, 80, 0.25);
+}
+
+.gauntlet-day-card .gdc-day-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #bf9eff;
+    text-transform: uppercase;
+}
+
+.gauntlet-day-card.done .gdc-day-num {
+    color: #3fb950;
+}
+
+.gauntlet-day-card .gdc-task {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.gauntlet-day-card .gdc-complete-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    background: rgba(191, 158, 255, 0.1);
+    border: 1px solid rgba(191, 158, 255, 0.3);
+    border-radius: 8px;
+    color: #bf9eff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+}
+
+.gauntlet-day-card .gdc-complete-btn:hover {
+    background: rgba(191, 158, 255, 0.2);
+    border-color: rgba(191, 158, 255, 0.6);
+}
+
+.gauntlet-day-card .gdc-done-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3fb950;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.5rem 0;
+}
+
+/* Spin utility */
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+    .gauntlet-layout { grid-template-columns: 1fr; }
 }

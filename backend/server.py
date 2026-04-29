@@ -25,8 +25,9 @@ if project_root not in sys.path:
 # Internal Imports
 from agent.subtask_generation import generate_subtasks, generate_subtasks_stream
 from agent.task_execution import perform_subtask
-from backend.models import db, Mission, Subtask, Habit, HabitLog, UserStats
+from backend.models import db, Mission, Subtask, Habit, HabitLog, UserStats, Gauntlet, GauntletDay, OracleBrief
 from backend.validators import validate_json_schema
+from backend.utils import extract_json
 
 def create_app() -> Flask:
     """
@@ -154,11 +155,11 @@ def run_agent_stream():
         # Save to DB inside application context after stream generation
         if final_subtasks:
             with app.app_context():
-                mission = Mission(goal=goal, intensity=intensity, status="active")
+                mission = Mission(goal=goal, intensity=intensity)
                 db.session.add(mission)
                 db.session.commit()
-                for task_text in final_subtasks:
-                    st = Subtask(mission_id=mission.id, name=task_text, status="pending")
+                for i, task_text in enumerate(final_subtasks, 1):
+                    st = Subtask(mission_id=mission.id, text=task_text, order=i)
                     db.session.add(st)
                 db.session.commit()
 
@@ -233,7 +234,10 @@ def update_subtask(subtask_id: int) -> Response:
         
         # Award XP if transitioning from Incomplete to Complete
         if not was_completed and subtask.is_completed:
+            subtask.completed_at = datetime.utcnow()
             award_xp(50)
+        elif was_completed and not subtask.is_completed:
+            subtask.completed_at = None
     
     db.session.commit()
 
@@ -582,6 +586,247 @@ def get_chronos_schedule() -> Response:
         "currentMission": recent_mission.goal if recent_mission else None,
         "schedule": schedule
     })
+
+
+# ────────────────────────────────────────────
+# MOMENTUM MATRIX — Activity Heatmap
+# ────────────────────────────────────────────
+
+@app.route('/analytics/heatmap', methods=['GET'])
+def get_heatmap() -> Response:
+    """
+    Returns daily activity counts for the last 90 days.
+    Combines subtask completions + habit log completions per calendar day.
+    """
+    from sqlalchemy import func, cast, Date
+
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=89)
+
+    # Subtask completions by day
+    subtask_counts = (
+        db.session.query(
+            func.date(Subtask.completed_at).label('day'),
+            func.count(Subtask.id).label('cnt')
+        )
+        .filter(
+            Subtask.is_completed == True,
+            Subtask.completed_at >= datetime.combine(start_date, datetime.min.time())
+        )
+        .group_by(func.date(Subtask.completed_at))
+        .all()
+    )
+
+    # Habit completions by day
+    habit_counts = (
+        db.session.query(
+            func.date(HabitLog.timestamp).label('day'),
+            func.count(HabitLog.id).label('cnt')
+        )
+        .filter(
+            HabitLog.status == 'completed',
+            HabitLog.timestamp >= datetime.combine(start_date, datetime.min.time())
+        )
+        .group_by(func.date(HabitLog.timestamp))
+        .all()
+    )
+
+    # Gauntlet completions by day
+    gauntlet_counts = (
+        db.session.query(
+            func.date(GauntletDay.completed_at).label('day'),
+            func.count(GauntletDay.id).label('cnt')
+        )
+        .filter(
+            GauntletDay.is_completed == True,
+            GauntletDay.completed_at >= datetime.combine(start_date, datetime.min.time())
+        )
+        .group_by(func.date(GauntletDay.completed_at))
+        .all()
+    )
+
+    # Merge counts
+    day_map: Dict[str, int] = {}
+    for row in subtask_counts:
+        day_map[str(row.day)] = day_map.get(str(row.day), 0) + row.cnt
+    for row in habit_counts:
+        day_map[str(row.day)] = day_map.get(str(row.day), 0) + row.cnt
+    for row in gauntlet_counts:
+        day_map[str(row.day)] = day_map.get(str(row.day), 0) + row.cnt
+
+    # Fill all 90 days (zero-count days included)
+    result = []
+    for i in range(90):
+        d = (start_date + timedelta(days=i)).isoformat()
+        result.append({'date': d, 'count': day_map.get(d, 0)})
+
+    return jsonify(result)
+
+
+# ────────────────────────────────────────────
+# ORACLE FEED — AI Daily Briefing (SSE)
+# ────────────────────────────────────────────
+
+@app.route('/oracle/brief', methods=['POST'])
+def oracle_brief() -> Response:
+    """
+    Generates and streams a personalized daily mission brief using the AI.
+    Checks for an existing brief for today before generating.
+    """
+    import json as _json
+    now = datetime.utcnow()
+    today = now.date()
+    hour = now.hour
+    time_of_day = "morning" if hour < 12 else ("afternoon" if hour < 17 else "evening")
+
+    # Check persistence first
+    existing = OracleBrief.query.filter_by(date=today).first()
+    if existing:
+        def stream_existing():
+            yield f"data: {_json.dumps({'text': existing.content})}\n\n"
+            yield f"data: {_json.dumps({'done': True})}\n\n"
+        return Response(stream_existing(), mimetype='text/event-stream')
+
+    # Gather context: active missions + pending subtasks
+    active_missions = Mission.query.filter_by(is_completed=False).order_by(Mission.timestamp.desc()).limit(3).all()
+    active_habits = Habit.query.order_by(Habit.created_at.desc()).limit(5).all()
+
+    mission_context = ""
+    for m in active_missions:
+        pending = [st.text for st in m.subtasks if not st.is_completed][:3]
+        mission_context += f"\n• Mission: {m.goal}\n  Pending steps: {', '.join(pending) if pending else 'All complete'}"
+
+    habit_context = ", ".join(h.name for h in active_habits) if active_habits else "No habits tracked yet"
+
+    prompt = (
+        f"You are Oracle, an elite AI life coach. Generate a personalized daily mission brief for this {time_of_day}.\n\n"
+        f"Active Missions:{mission_context if mission_context else chr(10) + '  No active missions yet.'}\n"
+        f"Tracked Habits: {habit_context}\n\n"
+        "Format your response as:\n"
+        "DAILY BRIEF — [DATE]\n\n"
+        "FOCUS DIRECTIVE\n[2 sentence priority focus]\n\n"
+        "TOP 3 ACTIONS\n1. [Action]\n2. [Action]\n3. [Action]\n\n"
+        "ORACLE INSIGHT\n[1 powerful motivational insight specific to their missions]\n\n"
+        "Keep the tone sharp, energetic, and military-precise. Max 200 words."
+    )
+
+    def generate():
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt, stream=True)
+            full_text = ""
+            for chunk in response:
+                if chunk.text:
+                    full_text += chunk.text
+                    data = _json.dumps({'text': chunk.text})
+                    yield f"data: {data}\n\n"
+            
+            # Persist after full generation
+            if full_text:
+                with app.app_context():
+                    new_brief = OracleBrief(date=today, content=full_text)
+                    db.session.add(new_brief)
+                    db.session.commit()
+
+            yield f"data: {_json.dumps({'done': True})}\n\n"
+        except Exception as e:
+            yield f"data: {_json.dumps({'error': str(e), 'done': True})}\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
+# ────────────────────────────────────────────
+# GAUNTLET PROTOCOL — Multi-Day Challenge Mode
+# ────────────────────────────────────────────
+
+@app.route('/gauntlet/generate', methods=['POST'])
+def gauntlet_generate() -> Response:
+    """
+    Generates a structured N-day challenge plan using the AI and saves it.
+    """
+    import json as _json
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body required'}), 400
+
+    goal = data.get('goal', '').strip()
+    duration = int(data.get('duration', 7))
+
+    if not goal:
+        return jsonify({'error': 'Goal is required'}), 400
+    if duration not in [7, 14, 30]:
+        duration = 7
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+        prompt = (
+            f"You are a elite personal coach. Create a precise {duration}-day challenge plan for this goal: \"{goal}\".\n\n"
+            f"Return ONLY a valid JSON array with exactly {duration} objects, each with:\n"
+            f"- \"day\": integer (1 to {duration})\n"
+            f"- \"task\": string (1 specific, actionable task for that day, max 100 chars)\n\n"
+            f"Example format: [{{'day': 1, 'task': 'Define your baseline...'}}]\n"
+            f"No markdown, no explanation, just the JSON array."
+        )
+
+        response = model.generate_content(prompt)
+        days_data = extract_json(response.text)
+
+        # Save to DB
+        gauntlet = Gauntlet(goal=goal, duration=duration)
+        db.session.add(gauntlet)
+        db.session.flush()
+
+        for item in days_data[:duration]:
+            day = GauntletDay(
+                gauntlet_id=gauntlet.id,
+                day_number=int(item.get('day', 1)),
+                task_text=str(item.get('task', ''))
+            )
+            db.session.add(day)
+
+        db.session.commit()
+        return jsonify({'success': True, 'gauntlet': gauntlet.to_dict()})
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[!] Gauntlet generation error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/gauntlet/list', methods=['GET'])
+def gauntlet_list() -> Response:
+    """Returns all gauntlets ordered newest first."""
+    gauntlets = Gauntlet.query.order_by(Gauntlet.created_at.desc()).all()
+    return jsonify([g.to_dict() for g in gauntlets])
+
+
+@app.route('/gauntlet/<int:gauntlet_id>/day/<int:day_id>', methods=['PATCH'])
+def gauntlet_complete_day(gauntlet_id: int, day_id: int) -> Response:
+    """Marks a single gauntlet day as completed and awards XP."""
+    day = db.session.get(GauntletDay, day_id)
+    if not day or day.gauntlet_id != gauntlet_id:
+        abort(404, description="Gauntlet day not found")
+
+    if not day.is_completed:
+        day.is_completed = True
+        day.completed_at = datetime.utcnow()
+        award_xp(30)
+
+    db.session.commit()
+    gauntlet = db.session.get(Gauntlet, gauntlet_id)
+    stats = UserStats.query.first()
+    return jsonify({
+        'success': True,
+        'gauntlet': gauntlet.to_dict(),
+        'userStats': stats.to_dict() if stats else {}
+    })
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

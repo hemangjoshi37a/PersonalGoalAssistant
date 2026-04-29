@@ -11,6 +11,9 @@ import { QuantumForge } from './forge.js';
 import { AuraNexus } from './aura.js';
 import { NeuralArchive } from './archive.js';
 import { ChronosEngine } from './chronos.js';
+import { MomentumMatrix } from './momentum.js';
+import { OracleFeed } from './oracle.js';
+import { GauntletProtocol } from './gauntlet.js';
 
 /**
  * AppController manages the main lifecycle of the Personal Goal Assistant frontend.
@@ -48,7 +51,9 @@ class AppController {
             mobileMenuBtn: document.getElementById('mobile-menu-btn'),
             sideDrawer: document.getElementById('side-drawer'),
             drawerOverlay: document.getElementById('drawer-overlay'),
-            closeDrawerBtn: document.getElementById('close-drawer')
+            closeDrawerBtn: document.getElementById('close-drawer'),
+            progressBar: document.getElementById('progress-bar-fill')?.parentElement,
+            progressLabel: document.getElementById('processing-view')?.querySelector('h3')
         };
 
         this.init();
@@ -73,6 +78,9 @@ class AppController {
         try { window.auraNexus = new AuraNexus(); } catch(e) { console.error("AuraNexus init failed:", e); }
         try { window.neuralArchive = new NeuralArchive(); } catch(e) { console.error("NeuralArchive init failed:", e); }
         try { window.chronosEngine = new ChronosEngine(); } catch(e) { console.error("ChronosEngine init failed:", e); }
+        try { window.momentumMatrix = new MomentumMatrix(); } catch(e) { console.error("MomentumMatrix init failed:", e); }
+        try { window.oracleFeed = new OracleFeed(); } catch(e) { console.error("OracleFeed init failed:", e); }
+        try { window.gauntletProtocol = new GauntletProtocol(); } catch(e) { console.error("GauntletProtocol init failed:", e); }
 
         console.log("[*] Personal Goal Assistant successfully initialized.");
     }
@@ -250,6 +258,15 @@ class AppController {
         } else if (hash === '#/chronos') {
             document.getElementById('page-chronos').classList.add('active');
             if (window.chronosEngine) window.chronosEngine.open();
+        } else if (hash === '#/momentum') {
+            document.getElementById('page-momentum').classList.add('active');
+            if (window.momentumMatrix) window.momentumMatrix.open();
+        } else if (hash === '#/oracle') {
+            document.getElementById('page-oracle').classList.add('active');
+            if (window.oracleFeed) window.oracleFeed.open();
+        } else if (hash === '#/gauntlet') {
+            document.getElementById('page-gauntlet').classList.add('active');
+            if (window.gauntletProtocol) window.gauntletProtocol.open();
         }
 
         lucide.createIcons();
@@ -261,11 +278,14 @@ class AppController {
      * @param {string} hash - The hash route being left.
      */
     _disposeModule(hash) {
-        if (hash === '#/lab'     && window.zenithLab)    window.zenithLab.dispose();
-        if (hash === '#/forge'   && window.quantumForge) window.quantumForge.dispose();
-        if (hash === '#/aura'    && window.auraNexus)    window.auraNexus.dispose();
-        if (hash === '#/archive' && window.neuralArchive) window.neuralArchive.dispose();
-        if (hash === '#/chronos' && window.chronosEngine) window.chronosEngine.dispose();
+        if (hash === '#/lab'      && window.zenithLab)       window.zenithLab.dispose();
+        if (hash === '#/forge'    && window.quantumForge)    window.quantumForge.dispose();
+        if (hash === '#/aura'     && window.auraNexus)       window.auraNexus.dispose();
+        if (hash === '#/archive'  && window.neuralArchive)   window.neuralArchive.dispose();
+        if (hash === '#/chronos'  && window.chronosEngine)   window.chronosEngine.dispose();
+        if (hash === '#/momentum' && window.momentumMatrix)  window.momentumMatrix.dispose();
+        if (hash === '#/oracle'   && window.oracleFeed)      window.oracleFeed.dispose();
+        if (hash === '#/gauntlet' && window.gauntletProtocol) window.gauntletProtocol.dispose();
     }
 
     /**
@@ -324,7 +344,7 @@ class AppController {
                         // Update the progress bar based on status keywords
                         if (chunk.status.includes('Generating')) this.updateProgress(40, chunk.status);
                         else if (chunk.status.includes('crystallized')) this.updateProgress(100, chunk.status);
-                        else this.updateProgress(this.dom.progressBar.style.width, chunk.status); // Keep width, update text
+                        else this.updateProgress(null, chunk.status); // Keep width, update text
                     }
                     if (chunk.final_subtasks) {
                         this.currentMissionData = { mission: { goal }, subtasks: chunk.final_subtasks };
@@ -519,6 +539,7 @@ class AppController {
                 const subtask_id = item.getAttribute('data-id');
                 const isChecked = e.target.checked;
                 
+                // Optimistic UI Update
                 item.classList.toggle('completed', isChecked);
                 this.updateProgress();
                 
@@ -528,14 +549,20 @@ class AppController {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ is_completed: isChecked })
                     });
-                    if (patchResponse.ok) {
-                        const data = await patchResponse.json();
-                        if (data.userStats) {
-                            this.updateMasteryUI(data.userStats);
-                        }
+                    
+                    if (!patchResponse.ok) throw new Error("Sync failed");
+
+                    const data = await patchResponse.json();
+                    if (data.userStats) {
+                        this.updateMasteryUI(data.userStats);
                     }
                 } catch (err) {
                     console.error("Failed to sync subtask state:", err);
+                    // ROLLBACK: Revert UI state on failure
+                    e.target.checked = !isChecked;
+                    item.classList.toggle('completed', !isChecked);
+                    this.updateProgress();
+                    alert("⚠️ Strategic Sync Failed: Could not update mission state. Check connection.");
                 }
             });
         });
@@ -590,14 +617,24 @@ class AppController {
     }
 
     /**
-     * Updates the mission progress bar based on completed items.
+     * Updates the mission progress bar based on completed items or manual overrides.
+     * @param {number|null} manualPct - Manual percentage (0-100)
+     * @param {string|null} statusText - Text to display in the processing view
      */
-    updateProgress() {
-        const items = document.querySelectorAll('.task-item');
-        if (items.length === 0) return;
-        
-        const completedItems = document.querySelectorAll('.task-item.completed');
-        const percentage = (completedItems.length / items.length) * 100;
+    updateProgress(manualPct = null, statusText = null) {
+        if (statusText && this.dom.progressLabel) {
+            this.dom.progressLabel.textContent = statusText;
+        }
+
+        let percentage = 0;
+        if (manualPct !== null) {
+            percentage = manualPct;
+        } else {
+            const items = document.querySelectorAll('.task-item');
+            if (items.length === 0) return;
+            const completedItems = document.querySelectorAll('.task-item.completed');
+            percentage = (completedItems.length / items.length) * 100;
+        }
         
         if (this.dom.progressBarFill) {
             this.dom.progressBarFill.style.width = `${percentage}%`;
@@ -605,6 +642,22 @@ class AppController {
                 ? 'linear-gradient(to right, #3fb950, #2ea043)' 
                 : 'linear-gradient(to right, hsla(var(--primary), 1), hsla(var(--accent), 1))';
         }
+    }
+
+    /**
+     * Transitions the UI from the mission form to the active execution/planning state.
+     */
+    transitionToActiveMission() {
+        this.dom.processingView.style.display = 'block';
+        this.dom.reportSection.style.display = 'none';
+        this.dom.finalCard.style.display = 'none';
+        this.dom.statusBadge.style.display = 'block';
+        this.dom.statusBadge.textContent = 'NEURAL LINK ACTIVE';
+        this.dom.statusBadge.style.color = 'hsla(var(--primary), 1)';
+        
+        this.dom.submitBtn.disabled = true;
+        this.dom.submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px"></i> TRANSMITTING...';
+        lucide.createIcons();
     }
 
     /**

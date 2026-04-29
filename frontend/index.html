@@ -51,6 +51,10 @@
                         <a href="#/aura"><i data-lucide="sparkles"></i> Aura Nexus</a>
                         <a href="#/archive"><i data-lucide="database"></i> Neural Archive</a>
                         <a href="#/chronos"><i data-lucide="clock"></i> Chronos Engine</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#/momentum"><i data-lucide="flame"></i> Momentum Matrix</a>
+                        <a href="#/oracle"><i data-lucide="radio"></i> Oracle Feed</a>
+                        <a href="#/gauntlet"><i data-lucide="shield"></i> Gauntlet Protocol</a>
                     </div>
                 </div>
                 <a href="#/console" class="btn btn-primary">Console</a>
@@ -77,6 +81,10 @@
         <a href="#/aura" class="drawer-link">Aura Nexus</a>
         <a href="#/archive" class="drawer-link">Neural Archive</a>
         <a href="#/chronos" class="drawer-link">Chronos Engine</a>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:0.5rem 0;"></div>
+        <a href="#/momentum" class="drawer-link">🔥 Momentum Matrix</a>
+        <a href="#/oracle" class="drawer-link">📡 Oracle Feed</a>
+        <a href="#/gauntlet" class="drawer-link">🛡️ Gauntlet Protocol</a>
         <a href="#/console" class="drawer-link">Console</a>
     </div>
 
@@ -176,6 +184,27 @@
                         <div class="card-content">
                             <h3>Chronos Engine</h3>
                             <p>Automatically synchronize and visualize your daily temporal schedule.</p>
+                        </div>
+                    </a>
+                    <a href="#/momentum" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="flame"></i></div>
+                        <div class="card-content">
+                            <h3>Momentum Matrix</h3>
+                            <p>Visualize 90 days of activity as a GitHub-style heatmap and track your best streaks.</p>
+                        </div>
+                    </a>
+                    <a href="#/oracle" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="radio"></i></div>
+                        <div class="card-content">
+                            <h3>Oracle Feed</h3>
+                            <p>Receive a personalized AI mission brief every morning, streamed in real-time.</p>
+                        </div>
+                    </a>
+                    <a href="#/gauntlet" class="dashboard-card glow-card">
+                        <div class="card-icon"><i data-lucide="shield"></i></div>
+                        <div class="card-content">
+                            <h3>Gauntlet Protocol</h3>
+                            <p>Forge 7, 14, or 30-day AI-generated challenge plans and track every day to victory.</p>
                         </div>
                     </a>
                 </div>
@@ -362,8 +391,10 @@
                 <div class="lab-sidebar">
                     <div class="lab-card">
                         <h5>Performance Pulse</h5>
-                        <canvas id="growth-chart"></canvas>
-                        <div id="lab-stats"></div>
+                        <div style="position:relative;height:200px;width:100%;flex-shrink:0;">
+                            <canvas id="growth-chart"></canvas>
+                        </div>
+                        <div id="lab-stats" style="margin-top:1rem;"></div>
                     </div>
                 </div>
                 <div class="lab-main">
@@ -491,6 +522,105 @@
             <div class="chronos-grid">
                 <div id="chronos-canvas-container" class="chronos-canvas"></div>
                 <div id="chronos-schedule-list" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+            </div>
+        </section>
+
+        <!-- ── MOMENTUM MATRIX ── -->
+        <section id="page-momentum" class="page-content">
+            <div class="page-header-bar">
+                <a href="#/" class="page-back-btn"><i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Home</a>
+                <div class="page-header-title">
+                    <span class="page-header-eyebrow">Activity Heatmap</span>
+                    <span class="page-header-name">Momentum Matrix</span>
+                </div>
+                <button class="page-action-btn" onclick="window.momentumMatrix?.open()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+            </div>
+            <div class="momentum-layout">
+                <div class="momentum-stats-strip" id="momentum-stats"></div>
+                <div class="lab-card momentum-heatmap-card">
+                    <div class="panel-header">
+                        <i data-lucide="calendar" style="width:16px;color:#00d2ff"></i>
+                        <h5>90-Day Neural Activity</h5>
+                    </div>
+                    <div id="momentum-heatmap" style="overflow-x:auto;padding:1rem 0;"></div>
+                </div>
+            </div>
+            <div id="momentum-tooltip" class="momentum-tooltip"></div>
+        </section>
+
+        <!-- ── ORACLE FEED ── -->
+        <section id="page-oracle" class="page-content">
+            <div class="page-header-bar">
+                <a href="#/" class="page-back-btn"><i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Home</a>
+                <div class="page-header-title">
+                    <span class="page-header-eyebrow">AI Daily Briefing</span>
+                    <span class="page-header-name">Oracle Feed</span>
+                </div>
+                <button id="oracle-generate-btn" class="page-action-btn">
+                    <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> New Brief
+                </button>
+            </div>
+            <div class="oracle-layout">
+                <div class="oracle-status-bar">
+                    <span class="oracle-status-dot"></span>
+                    <span id="oracle-status" class="oracle-status-text">AWAITING TRANSMISSION</span>
+                </div>
+                <div class="lab-card oracle-card">
+                    <div id="oracle-brief-content" class="oracle-brief-body"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── GAUNTLET PROTOCOL ── -->
+        <section id="page-gauntlet" class="page-content">
+            <div class="page-header-bar">
+                <a href="#/" class="page-back-btn"><i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Home</a>
+                <div class="page-header-title">
+                    <span class="page-header-eyebrow">Challenge Mode</span>
+                    <span class="page-header-name">Gauntlet Protocol</span>
+                </div>
+                <div class="page-header-hint">
+                    <i data-lucide="shield" style="width:14px;height:14px;opacity:0.6;"></i>
+                    <span id="gauntlet-status">Select a protocol</span>
+                </div>
+            </div>
+            <div class="gauntlet-layout">
+                <!-- Left: Forge new + List -->
+                <div class="gauntlet-left-panel">
+                    <div class="lab-card">
+                        <div class="panel-header">
+                            <i data-lucide="plus-circle" style="width:16px;color:#bf9eff"></i>
+                            <h5>Forge New Protocol</h5>
+                        </div>
+                        <form id="gauntlet-form" class="gauntlet-forge-form">
+                            <input type="text" id="gauntlet-goal" placeholder="e.g. Build a daily running habit" required style="width:100%;">
+                            <div class="gauntlet-duration-picker">
+                                <label class="gd-option"><input type="radio" name="gauntlet-duration" value="7" checked><span>7 Days</span></label>
+                                <label class="gd-option"><input type="radio" name="gauntlet-duration" value="14"><span>14 Days</span></label>
+                                <label class="gd-option"><input type="radio" name="gauntlet-duration" value="30"><span>30 Days</span></label>
+                            </div>
+                            <button type="submit" id="gauntlet-submit-btn" class="btn btn-primary" style="width:100%;justify-content:center;">
+                                <i data-lucide="zap" style="width:14px"></i> FORGE GAUNTLET
+                            </button>
+                        </form>
+                    </div>
+                    <div class="lab-card" style="margin-top:1.5rem;">
+                        <div class="panel-header">
+                            <i data-lucide="list" style="width:16px;color:#bf9eff"></i>
+                            <h5>Active Protocols</h5>
+                        </div>
+                        <div id="gauntlet-list" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;"></div>
+                    </div>
+                </div>
+                <!-- Right: Timeline -->
+                <div class="gauntlet-right-panel">
+                    <div id="gauntlet-timeline" class="gauntlet-timeline-panel">
+                        <div style="color:var(--text-dim);text-align:center;padding:4rem 2rem;font-size:0.85rem;">
+                            <i data-lucide="shield" style="width:48px;height:48px;opacity:0.2;display:block;margin:0 auto 1rem;"></i>
+                            Forge a protocol or select one from the list to view the timeline.
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
