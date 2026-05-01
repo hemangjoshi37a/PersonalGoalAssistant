@@ -27,6 +27,8 @@
     <script src="apiClient.js"></script>
     <script src="main.js"></script>
     <script src="lab.js"></script>
+    <script src="onboarding.js"></script>
+    <script src="notifications.js"></script>
 
 </head>
 <body>
@@ -36,11 +38,11 @@
             <a href="#" class="logo">GOAL.PERSONAL</a>
             
             <div class="nav-links">
-                <a href="#how-it-works" class="nav-section-link"><i data-lucide="layers" style="width: 14px; margin-right: 6px;"></i>Process</a>
-                <a href="#modules" class="nav-section-link"><i data-lucide="box" style="width: 14px; margin-right: 6px;"></i>Modules</a>
-                <a href="#use-cases" class="nav-section-link"><i data-lucide="compass" style="width: 14px; margin-right: 6px;"></i>Capabilities</a>
+                <a href="#how-it-works" class="nav-section-link guest-only"><i data-lucide="layers" style="width: 14px; margin-right: 6px;"></i>Process</a>
+                <a href="#modules" class="nav-section-link guest-only"><i data-lucide="box" style="width: 14px; margin-right: 6px;"></i>Modules</a>
+                <a href="#use-cases" class="nav-section-link guest-only"><i data-lucide="compass" style="width: 14px; margin-right: 6px;"></i>Capabilities</a>
                 
-                <div class="dropdown">
+                <div class="dropdown auth-only">
                     <div class="dropdown-trigger">
                         <span>Strategic Lab</span>
                         <i data-lucide="chevron-down" style="width: 14px;"></i>
@@ -57,7 +59,9 @@
                         <a href="#/gauntlet"><i data-lucide="shield"></i> Gauntlet Protocol</a>
                     </div>
                 </div>
-                <a href="#/console" class="btn btn-primary">Console</a>
+                <div id="nav-auth-group" style="display: flex; align-items: center; gap: 1rem;">
+                    <!-- Dynamically filled by main.js -->
+                </div>
             </div>
 
             <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">
@@ -72,24 +76,27 @@
             <div class="logo">MENU</div>
             <button id="close-drawer" class="btn-icon" style="color: white;"><i data-lucide="x"></i></button>
         </div>
-        <a href="#how-it-works" class="drawer-link nav-section-link">Process</a>
-        <a href="#modules" class="drawer-link nav-section-link">Modules</a>
-        <a href="#use-cases" class="drawer-link nav-section-link">Capabilities</a>
-        <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;" class="nav-section-link"></div>
-        <a href="#/lab" class="drawer-link">Zenith Lab</a>
-        <a href="#/forge" class="drawer-link">Quantum Forge</a>
-        <a href="#/aura" class="drawer-link">Aura Nexus</a>
-        <a href="#/archive" class="drawer-link">Neural Archive</a>
-        <a href="#/chronos" class="drawer-link">Chronos Engine</a>
-        <div style="height:1px;background:rgba(255,255,255,0.1);margin:0.5rem 0;"></div>
-        <a href="#/momentum" class="drawer-link">🔥 Momentum Matrix</a>
-        <a href="#/oracle" class="drawer-link">📡 Oracle Feed</a>
-        <a href="#/gauntlet" class="drawer-link">🛡️ Gauntlet Protocol</a>
-        <a href="#/console" class="drawer-link">Console</a>
+        <a href="#how-it-works" class="drawer-link nav-section-link guest-only">Process</a>
+        <a href="#modules" class="drawer-link nav-section-link guest-only">Modules</a>
+        <a href="#use-cases" class="drawer-link nav-section-link guest-only">Capabilities</a>
+        <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;" class="nav-section-link guest-only"></div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:0.5rem 0;" class="auth-only"></div>
+        <a href="#/dashboard" class="drawer-link auth-only">Dashboard</a>
+        <a href="#/lab" class="drawer-link auth-only">Zenith Lab</a>
+        <a href="#/forge" class="drawer-link auth-only">Quantum Forge</a>
+        <a href="#/aura" class="drawer-link auth-only">Aura Nexus</a>
+        <a href="#/archive" class="drawer-link auth-only">Neural Archive</a>
+        <a href="#/chronos" class="drawer-link auth-only">Chronos Engine</a>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:0.5rem 0;" class="auth-only"></div>
+        <a href="#/momentum" class="drawer-link auth-only">🔥 Momentum Matrix</a>
+        <a href="#/oracle" class="drawer-link auth-only">📡 Oracle Feed</a>
+        <a href="#/gauntlet" class="drawer-link auth-only">🛡️ Gauntlet Protocol</a>
+        <a href="#/console" class="drawer-link auth-only">Console</a>
+        <button class="drawer-link auth-only global-logout-btn" style="text-align: left; background: none; border: none; padding: 0; color: #ff4d4d; cursor: pointer; font-family: inherit; font-size: 1.25rem; font-weight: 600;">Logout</button>
     </div>
 
     <main id="router-view">
-        <section id="page-home" class="page-content active">
+        <section id="page-landing" class="page-content active">
             <header class="hero">
                 <div class="hero-badge reveal">Autonomous Personal Executive v2.0</div>
                 <h1 class="reveal">Your <span>Autonomous</span> Personal Goal Partner</h1>
@@ -143,7 +150,9 @@
                     </div>
                 </div>
             </section>
+        </section> <!-- End page-landing -->
 
+        <section id="page-dashboard" class="page-content">
             <section id="app-dashboard" style="padding: 100px 5%; max-width: 1400px; margin: 0 auto;">
                 <div class="section-header reveal" style="text-align: center; margin-bottom: 4rem;">
                     <h2>System Modules</h2>
@@ -209,7 +218,7 @@
                     </a>
                 </div>
             </section>
-        </section> <!-- End page-home -->
+        </section> <!-- End page-dashboard -->
 
         <!-- Mission Console Page -->
         <section id="page-console" class="page-content">
@@ -624,17 +633,171 @@
             </div>
         </section>
 
+        <!-- ── AUTH PAGES ── -->
+        <section id="page-login" class="page-content">
+            <div class="app-container" style="max-width: 450px; margin: 0 auto;">
+                <div class="lab-card auth-card">
+                    <div class="panel-header" style="justify-content: center; margin-bottom: 2rem;">
+                        <div class="logo">INITIATE SESSION</div>
+                    </div>
+                    <form id="login-form" class="auth-form">
+                        <div class="input-group">
+                            <label>Username</label>
+                            <input type="text" id="login-username" placeholder="Enter your identifier" required>
+                        </div>
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label>Password</label>
+                            <input type="password" id="login-password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 2rem; justify-content: center;">
+                            CONNECT
+                        </button>
+                    </form>
+                    <div style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--text-dim);">
+                        New operative? <a href="#/signup" style="color: hsla(var(--primary), 1); font-weight: 700;">Request Access</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-signup" class="page-content">
+            <div class="app-container" style="max-width: 450px; margin: 0 auto;">
+                <div class="lab-card auth-card">
+                    <div class="panel-header" style="justify-content: center; margin-bottom: 2rem;">
+                        <div class="logo">REQUEST ACCESS</div>
+                    </div>
+                    <form id="signup-form" class="auth-form">
+                        <div class="input-group">
+                            <label>Username</label>
+                            <input type="text" id="signup-username" placeholder="Choose identifier" required>
+                        </div>
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label>Email Address</label>
+                            <input type="email" id="signup-email" placeholder="operative@system.net" required>
+                        </div>
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label>Password</label>
+                            <input type="password" id="signup-password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 2rem; justify-content: center;">
+                            INITIALIZE ACCOUNT
+                        </button>
+                    </form>
+                    <div style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--text-dim);">
+                        Already active? <a href="#/login" style="color: hsla(var(--primary), 1); font-weight: 700;">Initiate Session</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── ONBOARDING FLOW ── -->
+        <section id="page-onboarding" class="page-content">
+            <div class="app-container" style="max-width: 800px; margin: 0 auto;">
+                <div class="lab-card onboarding-card" id="onboarding-container">
+                    <!-- Steps dynamically rendered by onboarding.js -->
+                    <div class="onboarding-step active" id="ob-step-1">
+                        <div class="onboarding-visual">
+                            <div class="orbit"></div>
+                        </div>
+                        <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem;">Welcome, operative.</h2>
+                        <p style="color: var(--text-dim); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2.5rem;">
+                            The Personal Goal Assistant is an autonomous executive designed to decompose complexity and orchestrate your growth through reinforcement learning.
+                        </p>
+                        <button class="btn btn-primary btn-large ob-next-btn" data-next="2">INITIALIZE SYSTEM</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── USER PROFILE ── -->
+        <section id="page-profile" class="page-content">
+            <div class="app-container" style="max-width: 800px; margin: 0 auto;">
+                <div class="lab-card profile-card">
+                    <div class="panel-header">
+                        <i data-lucide="user" style="color: hsla(var(--primary), 1);"></i>
+                        <h5>Operative Profile</h5>
+                    </div>
+                    <div class="profile-layout" style="display: grid; grid-template-columns: 200px 1fr; gap: 3rem; margin-top: 2rem;">
+                        <div class="profile-avatar-section">
+                            <div class="avatar-large" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, hsla(var(--primary), 0.2), hsla(var(--accent), 0.2)); border: 2px solid hsla(var(--primary), 0.5); display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 900;">
+                                <span id="profile-initial">?</span>
+                            </div>
+                        </div>
+                        <div class="profile-info-section">
+                            <div class="info-group">
+                                <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px;">Identifier</label>
+                                <div id="profile-username" style="font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;">---</div>
+                            </div>
+                            <div class="info-group" style="margin-top: 1.5rem;">
+                                <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px;">Network Address</label>
+                                <div id="profile-email" style="font-size: 1.1rem; color: var(--text-dim); margin-top: 0.5rem;">---</div>
+                            </div>
+                            <div class="info-group" style="margin-top: 1.5rem;">
+                                <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px;">Commissioned On</label>
+                                <div id="profile-date" style="font-size: 1.1rem; color: var(--text-dim); margin-top: 0.5rem;">---</div>
+                            </div>
+                            <button id="logout-btn" class="btn btn-secondary" style="margin-top: 2.5rem; border-color: #ff4d4d; color: #ff4d4d;">TERMINATE SESSION</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <footer style="background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); padding: 80px 10% 40px;">
-        <div class="footer-grid">
-            <div class="footer-about">
-                <div class="logo">GOAL.PERSONAL</div>
-                <p>&copy; 2026 Personal Goal Assistant. All rights reserved.</p>
-                <div class="footer-socials">
-                    <a href="#" class="social-icon"><i data-lucide="github"></i></a>
-                    <a href="#" class="social-icon"><i data-lucide="twitter"></i></a>
-                    <a href="#" class="social-icon"><i data-lucide="linkedin"></i></a>
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-brand reveal">
+                    <div class="logo">GOAL.PERSONAL</div>
+                    <p class="footer-tagline">Your Autonomous Life Executive. Decomposing complexity, orchestrating growth, and executing your vision through reinforcement learning.</p>
+                    <div class="footer-socials">
+                        <a href="https://github.com" class="social-link" aria-label="GitHub"><i data-lucide="github"></i></a>
+                        <a href="https://twitter.com" class="social-link" aria-label="Twitter"><i data-lucide="twitter"></i></a>
+                        <a href="https://linkedin.com" class="social-link" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-links-column reveal">
+                    <h4>Core Modules</h4>
+                    <ul>
+                        <li><a href="#/lab">Zenith Growth Lab</a></li>
+                        <li><a href="#/forge">Quantum Forge</a></li>
+                        <li><a href="#/aura">Aura Nexus</a></li>
+                        <li><a href="#/archive">Neural Archive</a></li>
+                        <li><a href="#/chronos">Chronos Engine</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-column reveal">
+                    <h4>Ecosystem</h4>
+                    <ul>
+                        <li><a href="#/momentum">Momentum Matrix</a></li>
+                        <li><a href="#/oracle">Oracle Feed</a></li>
+                        <li><a href="#/gauntlet">Gauntlet Protocol</a></li>
+                        <li><a href="#/console">Mission Control</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-column reveal">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">System Status</a></li>
+                        <li><a href="#">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    &copy; 2026 Personal Goal Assistant. All rights reserved.
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacy Protocol</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
                 </div>
             </div>
         </div>

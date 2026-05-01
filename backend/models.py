@@ -5,11 +5,47 @@ Defines schema for Missions, Subtasks, Habits, and Habit Logs using SQLAlchemy.
 """
 
 import math
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 db = SQLAlchemy()
+
+class User(db.Model, UserMixin):
+    """
+    Represents a registered user of the system.
+    """
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    has_completed_onboarding = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    missions = db.relationship('Mission', backref='user', lazy=True)
+    habits = db.relationship('Habit', backref='user', lazy=True)
+    gauntlets = db.relationship('Gauntlet', backref='user', lazy=True)
+    stats = db.relationship('UserStats', backref='user', uselist=False, lazy=True)
+    briefs = db.relationship('OracleBrief', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'has_completed_onboarding': self.has_completed_onboarding,
+            'created_at': self.created_at.isoformat()
+        }
 
 class Mission(db.Model):
     """
@@ -17,6 +53,7 @@ class Mission(db.Model):
     """
     __tablename__ = 'missions'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) # Nullable for now to handle migration
     goal = db.Column(db.String(500), nullable=False)
     intensity = db.Column(db.String(50), default='balanced')
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -68,6 +105,7 @@ class Habit(db.Model):
     """
     __tablename__ = 'habits'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     cue = db.Column(db.String(200))          # The behavioral trigger
     reward = db.Column(db.String(200))        # The craving satisfaction
@@ -147,6 +185,7 @@ class Gauntlet(db.Model):
     """
     __tablename__ = 'gauntlets'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     goal = db.Column(db.String(500), nullable=False)
     duration = db.Column(db.Integer, default=7)   # 7, 14, or 30 days
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -197,6 +236,7 @@ class UserStats(db.Model):
     """
     __tablename__ = 'user_stats'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=True)
     xp = db.Column(db.Integer, default=0)
     
     @property
@@ -228,7 +268,8 @@ class OracleBrief(db.Model):
     """
     __tablename__ = 'oracle_briefs'
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, default=datetime.utcnow().date, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    date = db.Column(db.Date, default=datetime.utcnow().date) # Remove unique=True to allow different users on same day
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

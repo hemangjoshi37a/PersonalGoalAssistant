@@ -10,8 +10,9 @@ import math
 from datetime import datetime, timedelta
 from typing import Tuple, Dict, Any, List
 
-from flask import Flask, request, jsonify, Response, abort
+from flask import Flask, request, jsonify, Response, abort, session
 from flask_cors import CORS
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -25,7 +26,7 @@ if project_root not in sys.path:
 # Internal Imports
 from agent.subtask_generation import generate_subtasks, generate_subtasks_stream
 from agent.task_execution import perform_subtask
-from backend.models import db, Mission, Subtask, Habit, HabitLog, UserStats, Gauntlet, GauntletDay, OracleBrief
+from backend.models import db, User, Mission, Subtask, Habit, HabitLog, UserStats, Gauntlet, GauntletDay, OracleBrief
 from backend.validators import validate_json_schema
 from backend.utils import extract_json
 
@@ -34,13 +35,23 @@ def create_app() -> Flask:
     Application factory for the Flask server.
     """
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, supports_credentials=True)
 
     # Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///goals.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.environ.get('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
 
     db.init_app(app)
+
+    # Auth Initialization
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login' # Not strictly used in JSON API but good practice
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, int(user_id))
 
     with app.app_context():
         db.create_all()
@@ -60,7 +71,71 @@ def handle_exception(e):
     import traceback; traceback.print_exc()
     return jsonify(error="Internal Server Error", description=str(e)), 500
 
+# --- Auth Endpoints ---
+
+@app.route('/auth/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not username or not email or not password:
+        return jsonify({'error': 'Missing fields'}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already exists'}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({'error': 'Email already exists'}), 400
+
+    user = User(username=username, email=email)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    # Create initial stats
+    stats = UserStats(user_id=user.id, xp=0)
+    db.session.add(stats)
+    db.session.commit()
+
+    login_user(user)
+    return jsonify({'success': True, 'user': user.to_dict()}), 201
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        login_user(user)
+        return jsonify({'success': True, 'user': user.to_dict()})
+    
+    return jsonify({'error': 'Invalid username or password'}), 401
+
+@app.route('/auth/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({'success': True})
+
+@app.route('/auth/me', methods=['GET'])
+def get_current_user():
+    if current_user.is_authenticated:
+        return jsonify({'authenticated': True, 'user': current_user.to_dict()})
+    return jsonify({'authenticated': False}), 200
+
+@app.route('/user/onboarding/complete', methods=['POST'])
+@login_required
+def complete_onboarding():
+    current_user.has_completed_onboarding = True
+    db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/run', methods=['POST'])
+@login_required
 @validate_json_schema(expected_types={'goal': str, 'intensity': str, 'persona': str})
 def run_agent() -> Tuple[Response, int]:
     """
@@ -88,7 +163,7 @@ def run_agent() -> Tuple[Response, int]:
         print(f"[*] Dispatching mission: {goal} [Intensity: {intensity}, Persona: {persona}]")
 
         # Persistence Sequence
-        new_mission = Mission(goal=goal, intensity=intensity)
+        new_mission = Mission(goal=goal, intensity=intensity, user_id=current_user.id)
         db.session.add(new_mission)
         db.session.commit()
 
@@ -125,6 +200,7 @@ def run_agent() -> Tuple[Response, int]:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/run/stream', methods=['POST'])
+@login_required
 @validate_json_schema(expected_types={'goal': str, 'intensity': str, 'persona': str})
 def run_agent_stream():
     """
@@ -155,7 +231,7 @@ def run_agent_stream():
         # Save to DB inside application context after stream generation
         if final_subtasks:
             with app.app_context():
-                mission = Mission(goal=goal, intensity=intensity)
+                mission = Mission(goal=goal, intensity=intensity, user_id=data.get('user_id')) # We need to pass user_id to stream since context might change
                 db.session.add(mission)
                 db.session.commit()
                 for i, task_text in enumerate(final_subtasks, 1):
@@ -168,19 +244,21 @@ def run_agent_stream():
 # --- Mission Control ---
 
 @app.route('/missions', methods=['GET'])
+@login_required
 def get_missions() -> Response:
     """
     Retrieves historical mission telemetry.
     """
-    missions = Mission.query.order_by(Mission.timestamp.desc()).all()
+    missions = Mission.query.filter_by(user_id=current_user.id).order_by(Mission.timestamp.desc()).all()
     return jsonify([m.to_dict() for m in missions])
 
 @app.route('/missions/<int:mission_id>/complete', methods=['PATCH'])
+@login_required
 def complete_mission(mission_id: int) -> Response:
     """
     Marks an entire mission as completed and awards bonus XP.
     """
-    mission = db.session.get(Mission, mission_id)
+    mission = Mission.query.filter_by(id=mission_id, user_id=current_user.id).first()
     if not mission:
         abort(404, description="Mission not found")
     
@@ -192,29 +270,33 @@ def complete_mission(mission_id: int) -> Response:
     return jsonify({
         'success': True,
         'mission': mission.to_dict(),
-        'userStats': UserStats.query.first().to_dict()
+        'userStats': current_user.stats.to_dict() if current_user.stats else {}
     })
 
 def award_xp(amount: int):
-    """Awards XP to the user, creating the stats record if it doesn't exist."""
-    stats = UserStats.query.first()
+    """Awards XP to the user."""
+    if not current_user.is_authenticated:
+        return
+    stats = current_user.stats
     if not stats:
-        stats = UserStats(xp=0)
+        stats = UserStats(user_id=current_user.id, xp=0)
         db.session.add(stats)
     stats.xp += amount
     db.session.commit()
 
 @app.route('/user/stats', methods=['GET'])
+@login_required
 def get_user_stats() -> Response:
     """Retrieves current mastery stats."""
-    stats = UserStats.query.first()
+    stats = current_user.stats
     if not stats:
-        stats = UserStats(xp=0)
+        stats = UserStats(user_id=current_user.id, xp=0)
         db.session.add(stats)
         db.session.commit()
     return jsonify(stats.to_dict())
 
 @app.route('/subtasks/<int:subtask_id>', methods=['PATCH'])
+@login_required
 def update_subtask(subtask_id: int) -> Response:
     """
     Updates the completion state of a specific subtask and awards XP.
@@ -248,7 +330,7 @@ def update_subtask(subtask_id: int) -> Response:
         award_xp(200)
         db.session.commit()
 
-    stats = UserStats.query.first()
+    stats = current_user.stats
     return jsonify({
         'success': True, 
         'subtask': subtask.to_dict(),
@@ -260,8 +342,8 @@ def get_analytics_stats() -> Response:
     """
     Aggregates performance metrics across all missions.
     """
-    total = Mission.query.count()
-    completed = Mission.query.filter_by(is_completed=True).count()
+    total = Mission.query.filter_by(user_id=current_user.id).count()
+    completed = Mission.query.filter_by(user_id=current_user.id, is_completed=True).count()
     
     success_rate = (completed / total * 100) if total > 0 else 0
     
@@ -270,18 +352,19 @@ def get_analytics_stats() -> Response:
         'completedMissions': completed,
         'successRate': round(success_rate, 1),
         'distribution': {
-            'blitz': Mission.query.filter_by(intensity='blitz').count(),
-            'balanced': Mission.query.filter_by(intensity='balanced').count(),
-            'mastery': Mission.query.filter_by(intensity='mastery').count()
+            'blitz': Mission.query.filter_by(user_id=current_user.id, intensity='blitz').count(),
+            'balanced': Mission.query.filter_by(user_id=current_user.id, intensity='balanced').count(),
+            'mastery': Mission.query.filter_by(user_id=current_user.id, intensity='mastery').count()
         }
     })
 
 @app.route('/analytics/topology', methods=['GET'])
+@login_required
 def get_topology() -> Response:
     """
     Generates a graph-based representation of mission networks.
     """
-    missions = Mission.query.order_by(Mission.timestamp.desc()).limit(10).all()
+    missions = Mission.query.filter_by(user_id=current_user.id).order_by(Mission.timestamp.desc()).limit(10).all()
     nodes = []
     links = []
     
@@ -312,6 +395,7 @@ def health_check() -> Response:
 # --- Quantum Forge ---
 
 @app.route('/forge/habits', methods=['GET', 'POST'])
+@login_required
 @validate_json_schema(expected_types={'name': str, 'cue': str, 'frequency': str})
 def handle_habits() -> Response:
     if request.method == 'POST':
@@ -321,6 +405,7 @@ def handle_habits() -> Response:
             return jsonify({'error': 'Habit name is required'}), 400
         new_habit = Habit(
             name=name,
+            user_id=current_user.id,
             cue=data.get('cue', '').strip() or None,
             frequency=data.get('frequency', 'daily')
         )
@@ -328,12 +413,13 @@ def handle_habits() -> Response:
         db.session.commit()
         return jsonify({'success': True, 'habit': new_habit.to_dict()})
     
-    return jsonify([h.to_dict() for h in Habit.query.order_by(Habit.created_at.desc()).all()])
+    return jsonify([h.to_dict() for h in Habit.query.filter_by(user_id=current_user.id).order_by(Habit.created_at.desc()).all()])
 
 @app.route('/forge/habits/<int:habit_id>', methods=['DELETE'])
+@login_required
 def delete_habit(habit_id: int) -> Response:
     """Deletes a habit and all its logs."""
-    habit = db.session.get(Habit, habit_id)
+    habit = Habit.query.filter_by(id=habit_id, user_id=current_user.id).first()
     if not habit:
         abort(404, description="Habit not found")
     db.session.delete(habit)
@@ -341,6 +427,7 @@ def delete_habit(habit_id: int) -> Response:
     return jsonify({'success': True})
 
 @app.route('/forge/log', methods=['POST'])
+@login_required
 @validate_json_schema(required_fields=['habit_id'], expected_types={'habit_id': int, 'status': str})
 def log_habit() -> Response:
     """Records a habit completion and awards XP."""
@@ -366,7 +453,7 @@ def log_habit() -> Response:
         
     db.session.commit()
 
-    stats = UserStats.query.first()
+    stats = current_user.stats
     return jsonify({
         'success': True,
         'log': new_log.to_dict(),
@@ -374,9 +461,10 @@ def log_habit() -> Response:
     })
 
 @app.route('/forge/predict', methods=['GET'])
+@login_required
 def predict_habits() -> Response:
     """Generates projections for habits based on recent activity (last 7 days)."""
-    habits = Habit.query.all()
+    habits = Habit.query.filter_by(user_id=current_user.id).all()
     projections = []
     
     cutoff = datetime.utcnow() - timedelta(days=7)
@@ -445,9 +533,10 @@ def _calculate_streak(logs: list) -> int:
     return streak
 
 @app.route('/analytics/aura', methods=['GET'])
+@login_required
 def get_aura_analytics() -> Response:
     """Calculates the user's personality aura based on mission data."""
-    missions = Mission.query.all()
+    missions = Mission.query.filter_by(user_id=current_user.id).all()
     if not missions:
         return jsonify({
             'type': 'Neutral Entity',
@@ -456,9 +545,9 @@ def get_aura_analytics() -> Response:
             'stats': {'blitz': 0, 'balanced': 0, 'mastery': 0}
         })
     
-    blitz = Mission.query.filter_by(intensity='blitz').count()
-    balanced = Mission.query.filter_by(intensity='balanced').count()
-    mastery = Mission.query.filter_by(intensity='mastery').count()
+    blitz = Mission.query.filter_by(user_id=current_user.id, intensity='blitz').count()
+    balanced = Mission.query.filter_by(user_id=current_user.id, intensity='balanced').count()
+    mastery = Mission.query.filter_by(user_id=current_user.id, intensity='mastery').count()
     
     total = len(missions)
     
@@ -521,6 +610,7 @@ def get_knowledge_graph() -> Response:
     return jsonify({"nodes": nodes, "links": links})
 
 @app.route('/chronos/schedule', methods=['GET'])
+@login_required
 def get_chronos_schedule() -> Response:
     """
     Generates a dynamic daily schedule based on real time of day and active missions.
@@ -530,7 +620,7 @@ def get_chronos_schedule() -> Response:
     current_hour = now.hour
 
     # Fetch most recent active mission subtasks for context
-    recent_mission = Mission.query.filter_by(is_completed=False).order_by(Mission.timestamp.desc()).first()
+    recent_mission = Mission.query.filter_by(user_id=current_user.id, is_completed=False).order_by(Mission.timestamp.desc()).first()
 
     # Build a dynamic schedule anchored to current time
     def _time_str(hour: int, minute: int = 0) -> str:
@@ -593,6 +683,7 @@ def get_chronos_schedule() -> Response:
 # ────────────────────────────────────────────
 
 @app.route('/analytics/heatmap', methods=['GET'])
+@login_required
 def get_heatmap() -> Response:
     """
     Returns daily activity counts for the last 90 days.
@@ -611,8 +702,10 @@ def get_heatmap() -> Response:
         )
         .filter(
             Subtask.is_completed == True,
-            Subtask.completed_at >= datetime.combine(start_date, datetime.min.time())
+            Subtask.completed_at >= datetime.combine(start_date, datetime.min.time()),
+            Mission.user_id == current_user.id
         )
+        .join(Mission)
         .group_by(func.date(Subtask.completed_at))
         .all()
     )
@@ -625,8 +718,10 @@ def get_heatmap() -> Response:
         )
         .filter(
             HabitLog.status == 'completed',
-            HabitLog.timestamp >= datetime.combine(start_date, datetime.min.time())
+            HabitLog.timestamp >= datetime.combine(start_date, datetime.min.time()),
+            Habit.user_id == current_user.id
         )
+        .join(Habit)
         .group_by(func.date(HabitLog.timestamp))
         .all()
     )
@@ -639,8 +734,10 @@ def get_heatmap() -> Response:
         )
         .filter(
             GauntletDay.is_completed == True,
-            GauntletDay.completed_at >= datetime.combine(start_date, datetime.min.time())
+            GauntletDay.completed_at >= datetime.combine(start_date, datetime.min.time()),
+            Gauntlet.user_id == current_user.id
         )
+        .join(Gauntlet)
         .group_by(func.date(GauntletDay.completed_at))
         .all()
     )
@@ -668,6 +765,7 @@ def get_heatmap() -> Response:
 # ────────────────────────────────────────────
 
 @app.route('/oracle/brief', methods=['POST'])
+@login_required
 def oracle_brief() -> Response:
     """
     Generates and streams a personalized daily mission brief using the AI.
@@ -680,7 +778,7 @@ def oracle_brief() -> Response:
     time_of_day = "morning" if hour < 12 else ("afternoon" if hour < 17 else "evening")
 
     # Check persistence first
-    existing = OracleBrief.query.filter_by(date=today).first()
+    existing = OracleBrief.query.filter_by(date=today, user_id=current_user.id).first()
     if existing:
         def stream_existing():
             yield f"data: {_json.dumps({'text': existing.content})}\n\n"
@@ -688,8 +786,8 @@ def oracle_brief() -> Response:
         return Response(stream_existing(), mimetype='text/event-stream')
 
     # Gather context: active missions + pending subtasks
-    active_missions = Mission.query.filter_by(is_completed=False).order_by(Mission.timestamp.desc()).limit(3).all()
-    active_habits = Habit.query.order_by(Habit.created_at.desc()).limit(5).all()
+    active_missions = Mission.query.filter_by(user_id=current_user.id, is_completed=False).order_by(Mission.timestamp.desc()).limit(3).all()
+    active_habits = Habit.query.filter_by(user_id=current_user.id).order_by(Habit.created_at.desc()).limit(5).all()
 
     mission_context = ""
     for m in active_missions:
@@ -726,7 +824,7 @@ def oracle_brief() -> Response:
             # Persist after full generation
             if full_text:
                 with app.app_context():
-                    new_brief = OracleBrief(date=today, content=full_text)
+                    new_brief = OracleBrief(date=today, content=full_text, user_id=data.get('user_id')) # Pass user_id like in mission stream
                     db.session.add(new_brief)
                     db.session.commit()
 
@@ -742,6 +840,7 @@ def oracle_brief() -> Response:
 # ────────────────────────────────────────────
 
 @app.route('/gauntlet/generate', methods=['POST'])
+@login_required
 def gauntlet_generate() -> Response:
     """
     Generates a structured N-day challenge plan using the AI and saves it.
@@ -777,7 +876,7 @@ def gauntlet_generate() -> Response:
         days_data = extract_json(response.text)
 
         # Save to DB
-        gauntlet = Gauntlet(goal=goal, duration=duration)
+        gauntlet = Gauntlet(goal=goal, duration=duration, user_id=current_user.id)
         db.session.add(gauntlet)
         db.session.flush()
 
@@ -800,17 +899,23 @@ def gauntlet_generate() -> Response:
 
 
 @app.route('/gauntlet/list', methods=['GET'])
+@login_required
 def gauntlet_list() -> Response:
     """Returns all gauntlets ordered newest first."""
-    gauntlets = Gauntlet.query.order_by(Gauntlet.created_at.desc()).all()
+    gauntlets = Gauntlet.query.filter_by(user_id=current_user.id).order_by(Gauntlet.created_at.desc()).all()
     return jsonify([g.to_dict() for g in gauntlets])
 
 
 @app.route('/gauntlet/<int:gauntlet_id>/day/<int:day_id>', methods=['PATCH'])
+@login_required
 def gauntlet_complete_day(gauntlet_id: int, day_id: int) -> Response:
     """Marks a single gauntlet day as completed and awards XP."""
-    day = db.session.get(GauntletDay, day_id)
-    if not day or day.gauntlet_id != gauntlet_id:
+    gauntlet = Gauntlet.query.filter_by(id=gauntlet_id, user_id=current_user.id).first()
+    if not gauntlet:
+        abort(404, description="Gauntlet not found")
+
+    day = GauntletDay.query.filter_by(id=day_id, gauntlet_id=gauntlet_id).first()
+    if not day:
         abort(404, description="Gauntlet day not found")
 
     if not day.is_completed:
@@ -819,8 +924,7 @@ def gauntlet_complete_day(gauntlet_id: int, day_id: int) -> Response:
         award_xp(30)
 
     db.session.commit()
-    gauntlet = db.session.get(Gauntlet, gauntlet_id)
-    stats = UserStats.query.first()
+    stats = current_user.stats
     return jsonify({
         'success': True,
         'gauntlet': gauntlet.to_dict(),

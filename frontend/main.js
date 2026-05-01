@@ -21,6 +21,8 @@ import { GauntletProtocol } from './gauntlet.js';
 class AppController {
     constructor() {
         this.api = new ApiClient('http://localhost:5000');
+        this.user = null;
+        this.isInitializing = true;
         
         /** @type {Object} UI Selectors */
         this.dom = {
@@ -53,7 +55,15 @@ class AppController {
             drawerOverlay: document.getElementById('drawer-overlay'),
             closeDrawerBtn: document.getElementById('close-drawer'),
             progressBar: document.getElementById('progress-bar-fill')?.parentElement,
-            progressLabel: document.getElementById('processing-view')?.querySelector('h3')
+            progressLabel: document.getElementById('processing-view')?.querySelector('h3'),
+            navAuthGroup: document.getElementById('nav-auth-group'),
+            loginForm: document.getElementById('login-form'),
+            signupForm: document.getElementById('signup-form'),
+            logoutBtn: document.getElementById('logout-btn'),
+            profileUsername: document.getElementById('profile-username'),
+            profileEmail: document.getElementById('profile-email'),
+            profileDate: document.getElementById('profile-date'),
+            profileInitial: document.getElementById('profile-initial'),
         };
 
         this.init();
@@ -69,7 +79,10 @@ class AppController {
         this.setupZenith();
         this.loadMissions();
         this.loadUserStats();
-        this.setupRouter();
+        this.checkAuthStatus().then(() => {
+            this.setupRouter();
+            this.isInitializing = false;
+        });
         
         // Initialize supporting modules with error boundaries
         try { new Background3D(); } catch(e) { console.error("Background3D init failed:", e); }
@@ -109,6 +122,30 @@ class AppController {
      * Attaches global event listeners to DOM elements.
      */
     setupEventListeners() {
+        // Auth Listeners
+        window.addEventListener('api-unauthorized', () => {
+            this.user = null;
+            this.updateNav();
+            window.location.hash = '#/login';
+        });
+
+        if (this.dom.loginForm) {
+            this.dom.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+        if (this.dom.signupForm) {
+            this.dom.signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+        }
+        if (this.dom.logoutBtn) {
+            this.dom.logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+
+        // Avatar Cycle Logic
+        document.addEventListener('click', (e) => {
+            const avatar = e.target.closest('.nav-profile-link div, .avatar-large');
+            if (avatar) {
+                this.cycleThemeColor();
+            }
+        });
         // Settings Toggle — use a CSS class flag to avoid empty-string false positives
         this.dom.settingsTrigger.addEventListener('click', () => {
             const isOpen = this.dom.settingsPanel.classList.contains('open');
@@ -156,6 +193,11 @@ class AppController {
         document.addEventListener('click', (e) => {
             const target = e.target.closest('a, button');
             if (!target) return;
+
+            if (target.classList.contains('global-logout-btn')) {
+                this.handleLogout();
+                return;
+            }
 
             // Section link handling: smooth-scroll to in-page anchors
             const href = target.getAttribute('href') || '';
@@ -228,6 +270,20 @@ class AppController {
      */
     handleRouting() {
         const hash = window.location.hash || '#/';
+        
+        // Auth Guard
+        const guestRoutes = ['#/', '', '#', '#/login', '#/signup'];
+        if (!this.user && !guestRoutes.includes(hash)) {
+            window.location.hash = '#/login';
+            return;
+        }
+
+        // Onboarding Guard
+        if (this.user && !this.user.has_completed_onboarding && hash !== '#/onboarding' && hash !== '#/login') {
+            window.location.hash = '#/onboarding';
+            return;
+        }
+
         const prevHash = this._activeHash || '';
         this._activeHash = hash;
 
@@ -239,8 +295,15 @@ class AppController {
         window.scrollTo(0, 0);
 
         // Route mapping
-        if (hash === '#/' || hash === '') {
-            document.getElementById('page-home').classList.add('active');
+        if (hash === '#/' || hash === '' || hash === '#') {
+            if (this.user) {
+                window.location.hash = '#/dashboard';
+                return;
+            } else {
+                document.getElementById('page-landing').classList.add('active');
+            }
+        } else if (hash === '#/dashboard') {
+            document.getElementById('page-dashboard').classList.add('active');
         } else if (hash === '#/console') {
             document.getElementById('page-console').classList.add('active');
         } else if (hash === '#/lab') {
@@ -267,6 +330,16 @@ class AppController {
         } else if (hash === '#/gauntlet') {
             document.getElementById('page-gauntlet').classList.add('active');
             if (window.gauntletProtocol) window.gauntletProtocol.open();
+        } else if (hash === '#/onboarding') {
+            document.getElementById('page-onboarding').classList.add('active');
+            if (window.onboarding) window.onboarding.init();
+        } else if (hash === '#/login') {
+            document.getElementById('page-login').classList.add('active');
+        } else if (hash === '#/signup') {
+            document.getElementById('page-signup').classList.add('active');
+        } else if (hash === '#/profile') {
+            document.getElementById('page-profile').classList.add('active');
+            this.renderProfile();
         }
 
         lucide.createIcons();
@@ -288,9 +361,134 @@ class AppController {
         if (hash === '#/gauntlet' && window.gauntletProtocol) window.gauntletProtocol.dispose();
     }
 
-    /**
-     * Navigates home.
-     */
+    // --- Auth Logic ---
+
+    async checkAuthStatus() {
+        try {
+            const data = await this.api.get('/auth/me');
+            if (data.authenticated) {
+                this.user = data.user;
+            } else {
+                this.user = null;
+            }
+        } catch (e) {
+            this.user = null;
+        }
+        this.updateNav();
+    }
+
+    updateNav() {
+        if (!this.dom.navAuthGroup) return;
+        
+        // Toggle feature visibility
+        document.querySelectorAll('.guest-only').forEach(el => el.style.display = this.user ? 'none' : '');
+        document.querySelectorAll('.auth-only').forEach(el => el.style.display = this.user ? '' : 'none');
+        
+        if (this.user) {
+            this.dom.navAuthGroup.innerHTML = `
+                <a href="#/dashboard" class="btn btn-secondary">Dashboard</a>
+                <a href="#/console" class="btn btn-primary">Console</a>
+                <a href="#/profile" class="nav-profile-link" style="display: flex; align-items: center; gap: 0.5rem; color: white; text-decoration: none; font-weight: 600;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: hsla(var(--primary), 0.2); border: 1px solid hsla(var(--primary), 0.5); display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                        ${this.user.username[0].toUpperCase()}
+                    </div>
+                    <span>${this.user.username}</span>
+                </a>
+                <button class="btn-icon global-logout-btn" aria-label="Logout" style="color: #ff4d4d; margin-left: 0.5rem;"><i data-lucide="log-out" style="width: 18px;"></i></button>
+            `;
+        } else {
+            this.dom.navAuthGroup.innerHTML = `
+                <a href="#/login" class="btn btn-secondary">Login</a>
+                <a href="#/signup" class="btn btn-primary">Sign Up</a>
+            `;
+        }
+        lucide.createIcons();
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const btn = e.target.querySelector('button');
+        
+        try {
+            btn.disabled = true;
+            btn.textContent = 'CONNECTING...';
+            const data = await this.api.post('/auth/login', { username, password });
+            this.user = data.user;
+            this.updateNav();
+            window.notifications.show(`Welcome back, ${this.user.username}`, 'success');
+            window.location.hash = this.user.has_completed_onboarding ? '#/dashboard' : '#/onboarding';
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'CONNECT';
+        }
+    }
+
+    async handleSignup(e) {
+        e.preventDefault();
+        const username = document.getElementById('signup-username').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const btn = e.target.querySelector('button');
+
+        try {
+            btn.disabled = true;
+            btn.textContent = 'INITIALIZING...';
+            const data = await this.api.post('/auth/signup', { username, email, password });
+            this.user = data.user;
+            this.updateNav();
+            window.location.hash = '#/onboarding';
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'INITIALIZE ACCOUNT';
+        }
+    }
+
+    async handleLogout() {
+        try {
+            await this.api.post('/auth/logout');
+            window.notifications.show('Session terminated.', 'info');
+            this.user = null;
+            this.updateNav();
+            window.location.hash = '#/';
+        } catch (err) {
+            console.error("Logout failed:", err);
+            // Force logout locally anyway
+            this.user = null;
+            this.updateNav();
+            window.location.hash = '#/';
+        }
+    }
+
+    renderProfile() {
+        if (!this.user) return;
+        this.dom.profileUsername.textContent = this.user.username;
+        this.dom.profileEmail.textContent = this.user.email;
+        this.dom.profileDate.textContent = new Date(this.user.created_at).toLocaleDateString();
+        this.dom.profileInitial.textContent = this.user.username[0].toUpperCase();
+        
+        // Apply theme color
+        const theme = localStorage.getItem('theme-color') || '190';
+        document.documentElement.style.setProperty('--primary', `${theme}, 100%, 50%`);
+    }
+
+    cycleThemeColor() {
+        const colors = ['190', '280', '40', '140']; // Cyan, Purple, Gold, Green
+        let current = localStorage.getItem('theme-color') || '190';
+        let next = colors[(colors.indexOf(current) + 1) % colors.length];
+        
+        localStorage.setItem('theme-color', next);
+        document.documentElement.style.setProperty('--primary', `${next}, 100%, 50%`);
+        window.notifications.show('Neural core resonance updated.', 'info');
+        
+        // Update nav to reflect change
+        this.updateNav();
+    }
     closeAllOverlays() {
         window.location.hash = '#/';
     }
@@ -355,6 +553,7 @@ class AppController {
             // The stream is fully complete
             setTimeout(() => {
                 this.renderFinalReport();
+                window.notifications.show('Mission strategy finalized.', 'success');
             }, 1000);
 
             // Reload history to show new mission
@@ -362,6 +561,7 @@ class AppController {
 
         } catch (error) {
             console.error("Neural Link Failure:", error);
+            window.notifications.show(`Neural Link Failure: ${error.message}`, 'error');
             this.updateProgress(0, `Mission Aborted: ${error.message}`);
             if (window.zenithLab) {
                 window.zenithLab.appendStreamLog(`CRITICAL ERROR: ${error.message}`, false);
@@ -544,17 +744,11 @@ class AppController {
                 this.updateProgress();
                 
                 try {
-                    const patchResponse = await fetch(`${backendUrl}/subtasks/${subtask_id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ is_completed: isChecked })
-                    });
+                    const data = await this.api.patch(`/subtasks/${subtask_id}`, { is_completed: isChecked });
                     
-                    if (!patchResponse.ok) throw new Error("Sync failed");
-
-                    const data = await patchResponse.json();
                     if (data.userStats) {
                         this.updateMasteryUI(data.userStats);
+                        if (isChecked) window.notifications.show('+25 XP — Strategy Synced', 'success');
                     }
                 } catch (err) {
                     console.error("Failed to sync subtask state:", err);
@@ -572,13 +766,8 @@ class AppController {
      * Fetches current mastery statistics from the backend.
      */
     async loadUserStats() {
-        let backendUrl = this.dom.backendUrlInput.value;
-        if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
-        
         try {
-            const response = await fetch(`${backendUrl}/user/stats`);
-            if (!response.ok) return;
-            const stats = await response.json();
+            const stats = await this.api.get('/user/stats');
             this.updateMasteryUI(stats);
         } catch (err) {
             console.warn("Mastery synchronization bypassed.");
@@ -737,13 +926,8 @@ class AppController {
      * Loads past mission history from the backend.
      */
     async loadMissions() {
-        let backendUrl = this.dom.backendUrlInput.value;
-        if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
-        
         try {
-            const response = await fetch(`${backendUrl}/missions`);
-            if (!response.ok) return;
-            const missions = await response.json();
+            const missions = await this.api.get('/missions');
             
             if (missions.length > 0) {
                 this.dom.historySection.style.display = 'block';

@@ -1013,3 +1013,153 @@
 @media (max-width: 900px) {
     .gauntlet-layout { grid-template-columns: 1fr; }
 }
+/* ─────────────────────────────────────
+   AUTH & ONBOARDING
+───────────────────────────────────── */
+.auth-card {
+    border-color: hsla(var(--primary), 0.3);
+    background: radial-gradient(circle at top right, hsla(var(--primary), 0.05), transparent);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+.input-group input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: hsla(var(--primary), 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 20px hsla(var(--primary), 0.1);
+}
+
+.onboarding-card {
+    padding: 4rem;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-color: hsla(var(--primary), 0.2);
+}
+
+.onboarding-step {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.onboarding-step.active {
+    display: flex;
+}
+
+.onboarding-visual {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin-bottom: 3rem;
+}
+
+.onboarding-visual .orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border: 1px dashed hsla(var(--primary), 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 20s linear infinite;
+}
+
+.onboarding-visual .core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.persona-selection-grid {
+    width: 100%;
+}
+
+.persona-option {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.persona-option i {
+    width: 24px;
+    height: 24px;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+}
+
+.persona-option strong {
+    font-size: 1rem;
+    color: white;
+}
+
+.persona-option span {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.persona-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.persona-option.active {
+    background: hsla(var(--primary), 0.1);
+    border-color: hsla(var(--primary), 0.5);
+    box-shadow: 0 10px 30px hsla(var(--primary), 0.1);
+}
+
+.persona-option.active i {
+    color: hsla(var(--primary), 1);
+}
+
+.step-badge {
+    background: hsla(var(--primary), 1);
+    color: #000;
+    font-weight: 900;
+    font-size: 0.65rem;
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    letter-spacing: 2px;
+}

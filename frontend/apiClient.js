@@ -20,7 +20,8 @@ class ApiClient {
                 'Content-Type': 'application/json',
                 ...(options.headers || {})
             },
-            signal: controller.signal
+            signal: controller.signal,
+            credentials: 'include' // Important for session cookies
         };
 
         if (config.body && typeof config.body === 'object') {
@@ -40,6 +41,10 @@ class ApiClient {
             }
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    // Trigger auth redirection
+                    window.dispatchEvent(new CustomEvent('api-unauthorized'));
+                }
                 const errorMessage = data && data.error ? data.error : `HTTP Error: ${response.status}`;
                 throw new Error(errorMessage);
             }
@@ -89,7 +94,8 @@ class ApiClient {
                     'Content-Type': 'application/json',
                     'Accept': 'text/event-stream',
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                credentials: 'include'
             });
 
             if (!response.ok) {
