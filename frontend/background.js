@@ -24,7 +24,7 @@ export class Background3D {
     init() {
         // Renderer Setup
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(1); // Locked to 1 for stable framerate
         
         // Camera Position
         this.camera.position.z = 3;
@@ -43,18 +43,12 @@ export class Background3D {
 
         // Glass Core (Icosahedron)
         const geometry = new THREE.IcosahedronGeometry(1, 1);
-        const material = new THREE.MeshPhysicalMaterial({
+        const material = new THREE.MeshStandardMaterial({
             color: 0xffffff,
-            metalness: 0,
-            roughness: 0.1,
-            transmission: 0.9,
-            thickness: 0.5,
-            ior: 1.5,
-            envMapIntensity: 1,
-            clearcoat: 1,
-            clearcoatRoughness: 0.1,
+            metalness: 0.3,
+            roughness: 0.2,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.15
         });
 
         this.core = new THREE.Mesh(geometry, material);
@@ -73,7 +67,7 @@ export class Background3D {
 
         // Particle Field
         const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 2000;
+        const particlesCount = 400;
         const posArray = new Float32Array(particlesCount * 3);
 
         for (let i = 0; i < particlesCount * 3; i++) {
